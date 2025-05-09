@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Product",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": ["string", "null"]
+    },
+    "description": {
+      "type": ["string", "null"]
+    },
+    "startPrice": {
+      "type": "number"
+    },
+    "currentPrice": {
+      "type": "number"
+    },
+    "brand": {
+      "type": ["string", "null"]
+    },
+    "imageUrl": {
+      "type": ["string", "null"],
+      "format": "uri"
+    },
+    "endOfAuction": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    }
+  },
+  "required": ["id", "startPrice", "currentPrice"]
+}

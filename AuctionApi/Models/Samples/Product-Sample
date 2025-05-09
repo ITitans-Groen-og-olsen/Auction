@@ -1,0 +1,10 @@
+{
+  "id": "a3c1f5b8-9e4e-4c4d-9b2e-0f14c8db7e95",
+  "name": "Wireless Headphones",
+  "description": "High-quality noise-cancelling headphones with Bluetooth connectivity.",
+  "startPrice": 99.99,
+  "currentPrice": 125.50,
+  "brand": "SoundMagic",
+  "imageUrl": "https://example.com/images/headphones.jpg",
+  "endOfAuction": "2025-06-15T18:00:00Z"
+}
