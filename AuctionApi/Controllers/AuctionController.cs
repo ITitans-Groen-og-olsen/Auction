@@ -176,3 +176,4 @@ public class AuctionController : ControllerBase
         return properties;
     }
 }
+// test
