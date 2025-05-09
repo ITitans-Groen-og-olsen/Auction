@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: AuctionApi.sln
+      Solution_Name: Auction.sln
       Test_Project_Path: AuctionApi.Test/AuctionApi.Test.csproj
 
     steps:
