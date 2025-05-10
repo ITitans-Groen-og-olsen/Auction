@@ -1,16 +1,14 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
-using Microsoft.Extensions.Logging;
 using Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 
 namespace Services
 {
     public class AuctionMongoDBService : IAuctionDBRepository
     {
-        private readonly IMongoCollection<Product> _productCollection;
+        private readonly IMongoCollection<Product> _products;
         private readonly ILogger<AuctionMongoDBService> _logger;
 
         public AuctionMongoDBService(ILogger<AuctionMongoDBService> logger, IConfiguration configuration)
@@ -27,7 +25,7 @@ namespace Services
             {
                 var client = new MongoClient(connectionString);
                 var database = client.GetDatabase(databaseName);
-                _productCollection = database.GetCollection<Product>(collectionName);
+                _products = database.GetCollection<Product>(collectionName);
             }
             catch (Exception ex)
             {
@@ -35,24 +33,32 @@ namespace Services
             }
         }
 
-        public async Task<Product> CreateProductAsync(Product product) =>
-            await Task.Run(async () => { await _productCollection.InsertOneAsync(product); return product; });
-
-        public async Task<Product> GetProductByIdAsync(Guid productId) =>
-            await _productCollection.Find(p => p.Id == productId).FirstOrDefaultAsync();
-
-        public async Task<IEnumerable<Product>> GetAllProductsAsync() =>
-            await _productCollection.Find(_ => true).ToListAsync();
-
-        public async Task<Product> UpdateProductAsync(Guid productId, Product updatedProduct)
+        public async Task<Product> GetProductByIdAsync(string id)
         {
-            var result = await _productCollection.ReplaceOneAsync(p => p.Id == productId, updatedProduct);
-            return result.MatchedCount > 0 ? updatedProduct : null;
+            return await _products.Find(p => p.Id.ToString() == id).FirstOrDefaultAsync();
         }
 
-        public async Task<bool> DeleteProductAsync(Guid productId)
+        public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
-            var result = await _productCollection.DeleteOneAsync(p => p.Id == productId);
+            return await _products.Find(_ => true).ToListAsync();
+        }
+
+        public async Task<Product> CreateProductAsync(Product product)
+        {
+            product.Id = Guid.NewGuid(); // Ensure a new GUID is generated if not set
+            await _products.InsertOneAsync(product);
+            return product;
+        }
+
+        public async Task<Product> UpdateProductAsync(string id, Product updatedProduct)
+        {
+            await _products.ReplaceOneAsync(p => p.Id.ToString() == id, updatedProduct);
+            return updatedProduct;
+        }
+
+        public async Task<bool> DeleteProductAsync(string id)
+        {
+            var result = await _products.DeleteOneAsync(p => p.Id.ToString() == id);
             return result.DeletedCount > 0;
         }
     }
