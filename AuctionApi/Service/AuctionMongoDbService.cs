@@ -14,9 +14,9 @@ namespace Services
         public AuctionMongoDBService(ILogger<AuctionMongoDBService> logger, IConfiguration configuration)
         {
             _logger = logger;
-            var connectionString = configuration["MongoConnectionString"] ?? "<blank>";
+            var connectionString = configuration["MongoConnectionString"] ?? "<blank>"; 
             var databaseName = configuration["DatabaseName"] ?? "<blank>";
-            var collectionName = configuration["CollectionName"] ?? "Auctions";
+            var collectionName = configuration["CollectionName"] ?? "<blank>";
             _logger.LogInformation($"Connected to MongoDB using: {connectionString}");
             _logger.LogInformation($" Using database: {databaseName}");
             _logger.LogInformation($" Using Collection: {collectionName}");
@@ -45,7 +45,7 @@ namespace Services
 
         public async Task<Product> CreateProductAsync(Product product)
         {
-            product.Id = Guid.NewGuid(); // Ensure a new GUID is generated if not set
+            product.Id = Guid.NewGuid(); 
             await _products.InsertOneAsync(product);
             return product;
         }
