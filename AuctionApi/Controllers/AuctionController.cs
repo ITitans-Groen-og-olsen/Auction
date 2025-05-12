@@ -1,179 +1,118 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Models;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using Services;
 using System.Diagnostics;
+
+namespace AuctionService.Controllers;
 
 [ApiController]
 [Route("[controller]")]
 public class AuctionController : ControllerBase
 {
     private readonly ILogger<AuctionController> _logger;
-    private readonly IAuctionDBRepository _auctionRepository;
+    private readonly IAuctionDBRepository _productRepository;
 
-    public AuctionController(IAuctionDBRepository auctionRepository, ILogger<AuctionController> logger)
+    public AuctionController(ILogger<AuctionController> logger, IAuctionDBRepository productRepository)
     {
-        _auctionRepository = auctionRepository;
         _logger = logger;
+        _productRepository = productRepository;
 
-        try
-        {
-            var hostName = Dns.GetHostName();
-            var ips = Dns.GetHostAddresses(hostName);
-            var ipAddr = ips.FirstOrDefault()?.MapToIPv4().ToString();
-            _logger.LogInformation($"Auction Service responding from {ipAddr}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error resolving IP address.");
-        }
+        var hostName = System.Net.Dns.GetHostName();
+        var ips = System.Net.Dns.GetHostAddresses(hostName);
+        var _ipaddr = ips.First().MapToIPv4().ToString();
+        _logger.LogInformation(1, $"Auction Service responding from {_ipaddr}");
     }
 
-    // GET: /auction/{productId}
-    [HttpGet("{productId}", Name = "GetAuctionItemById")]
-    public async Task<ActionResult<Product>> Get(Guid productId)
+    [HttpGet("GetProductById/{productId}")]
+    public Task<Product> GetProductById(string productId)
     {
         try
         {
-            var product = await _auctionRepository.GetProductByIdAsync(productId);
-            if (product == null)
-            {
-                _logger.LogWarning($"Auction item with ID {productId} not found.");
-                return NotFound();
-            }
-
-            return Ok(product);
+            return _productRepository.GetProductByIdAsync(productId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching auction item by ID.");
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex.Message);
+            throw;
         }
     }
 
-    // GET: /auction/
-    [HttpGet(Name = "GetAllAuctionItems")]
-    public async Task<ActionResult<List<Product>>> GetAll()
+    [HttpGet("GetAllProducts")]
+    public Task<IEnumerable<Product>> GetAllProducts()
     {
         try
         {
-            var products = await _auctionRepository.GetAllProductsAsync();
-            return Ok(products);
+            return _productRepository.GetAllProductsAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching all auction items.");
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex.Message);
+            throw;
         }
     }
 
-    // POST: /auction/
-    [HttpPost]
-    public async Task<ActionResult<Product>> Create([FromBody] Product product)
+    [HttpPost("AddProduct")]
+    public Task<Product> AddProduct([FromBody] Product product)
     {
         try
         {
-            var createdProduct = await _auctionRepository.CreateProductAsync(product);
-            return CreatedAtAction(nameof(Get), new { productId = createdProduct.Id }, createdProduct);
+            return _productRepository.CreateProductAsync(product);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating new auction item.");
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex.Message);
+            throw;
         }
     }
 
-    // PUT: /auction/{productId}
-    [HttpPut("{productId}")]
-    public async Task<ActionResult<Product>> Update(Guid productId, [FromBody] Product updatedProduct)
+    [HttpPut("UpdateProduct/{productId}")]
+    public Task<Product> UpdateProduct(string productId, Product product)
     {
         try
         {
-            var product = await _auctionRepository.GetProductByIdAsync(productId);
-            if (product == null)
-            {
-                _logger.LogWarning($"Auction item with ID {productId} not found.");
-                return NotFound();
-            }
-
-            updatedProduct.Id = productId;
-            var result = await _auctionRepository.UpdateProductAsync(productId, updatedProduct);
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(result);
+            return _productRepository.UpdateProductAsync(productId, product);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating auction item.");
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex.Message);
+            throw;
         }
     }
 
-    // DELETE: /auction/{productId}
-    [HttpDelete("{productId}")]
-    public async Task<IActionResult> Delete(Guid productId)
+    [HttpDelete("DeleteProduct/{productId}")]
+    public Task<bool> DeleteProduct(string productId)
     {
         try
         {
-            var success = await _auctionRepository.DeleteProductAsync(productId);
-            if (!success)
-            {
-                _logger.LogWarning($"Auction item with ID {productId} not found.");
-                return NotFound();
-            }
-
-            return NoContent();
+            return _productRepository.DeleteProductAsync(productId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting auction item.");
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex.Message);
+            throw;
         }
     }
 
-    // GET: /auction/version
     [HttpGet("version")]
-    public async Task<ActionResult<Dictionary<string, string>>> GetVersion()
+    public async Task<Dictionary<string, string>> GetVersion()
     {
-        var properties = new Dictionary<string, string>
-        {
-            ["service"] = "Auction Service"
-        };
-
+        var properties = new Dictionary<string, string>();
+        var assembly = typeof(Program).Assembly;
+        properties.Add("service", "Auction Service");
+        var ver = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location).ProductVersion;
+        properties.Add("version", ver!);
         try
         {
-            var ver = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location).ProductVersion;
-            properties["version"] = ver ?? "Unknown";
+            var hostName = System.Net.Dns.GetHostName();
+            var ips = await System.Net.Dns.GetHostAddressesAsync(hostName);
+            var ipa = ips.First().MapToIPv4().ToString();
+            properties.Add("hosted-at-address", ipa);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve version.");
-            properties["version"] = "Error";
+            _logger.LogError(ex.Message);
+            properties.Add("hosted-at-address", "Could not resolve IP-address");
         }
-
-        try
-        {
-            var hostName = Dns.GetHostName();
-            var ips = await Dns.GetHostAddressesAsync(hostName);
-            var ip = ips.FirstOrDefault()?.MapToIPv4().ToString();
-            properties["hosted-at-address"] = ip ?? "Unknown";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to resolve IP address.");
-            properties["hosted-at-address"] = "Could not resolve IP-address";
-        }
-
         return properties;
     }
 }
-// test

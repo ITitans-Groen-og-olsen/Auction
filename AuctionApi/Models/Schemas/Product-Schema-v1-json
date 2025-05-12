@@ -1,35 +1,40 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Product",
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "string",
-      "format": "uuid"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Product",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "type": ["string", "null"]
+      },
+      "startPrice": {
+        "type": "number"
+      },
+      "currentbid": {
+        "type": ["number", "null"]
+      },
+      "brand": {
+        "type": ["string", "null"]
+      },
+      "image": {
+        "type": "string",
+        "format": "uri"
+      },
+      "endOfAuction": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "currentBidder": {
+        "type": ["integer", "null"]
+      }
     },
-    "name": {
-      "type": ["string", "null"]
-    },
-    "description": {
-      "type": ["string", "null"]
-    },
-    "startPrice": {
-      "type": "number"
-    },
-    "currentPrice": {
-      "type": "number"
-    },
-    "brand": {
-      "type": ["string", "null"]
-    },
-    "imageUrl": {
-      "type": ["string", "null"],
-      "format": "uri"
-    },
-    "endOfAuction": {
-      "type": ["string", "null"],
-      "format": "date-time"
-    }
-  },
-  "required": ["id", "startPrice", "currentPrice"]
-}
+    "required": ["id", "name", "startPrice", "image", "endOfAuction"],
+    "additionalProperties": false
+  }
+  

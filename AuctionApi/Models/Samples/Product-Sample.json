@@ -1,0 +1,11 @@
+{
+  "_id": "3f9cfaab-38e0-4a5e-8be2-50c44d2c3b12",
+  "name": "4K Ultra HD Monitor",
+  "description": "Stunning 27-inch monitor with razor-sharp 4K resolution.",
+  "startPrice": 199.99,
+  "currentbid": 245.00,
+  "brand": "ViewTech",
+  "image": "https://example.com/images/monitor.jpg",
+  "endOfAuction": "2025-06-20T21:00:00Z",
+  "currentBidder": 1023
+}
