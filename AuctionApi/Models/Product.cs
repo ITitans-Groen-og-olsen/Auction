@@ -16,4 +16,5 @@ public class Product
     public string Image { get; set; }
     public DateTime EndOfAuction { get; set; }
     public int? CurrentBidder { get; set; }
+    public List<BidHistory>? BidHistory { get; set; }
 }

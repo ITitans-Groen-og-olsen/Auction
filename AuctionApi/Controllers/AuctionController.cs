@@ -93,6 +93,20 @@ public class AuctionController : ControllerBase
         }
     }
 
+    [HttpPost("{productId}/bids")]
+    public async Task<IActionResult> PlaceBid(string productId, [FromBody] BidHistory bid)
+    {
+        if (bid == null || bid.BidAmount <= 0)
+            return BadRequest("Invalid bid.");
+
+        var updatedProduct = await _productRepository.AddBidAsync(productId, bid);
+        if (updatedProduct == null)
+            return NotFound();
+
+        return Ok(updatedProduct);
+    }
+
+
     [HttpGet("version")]
     public async Task<Dictionary<string, string>> GetVersion()
     {

@@ -9,5 +9,7 @@ namespace Services
         Task<Product> CreateProductAsync(Product product);
         Task<Product> UpdateProductAsync(string id, Product updatedProduct);
         Task<bool> DeleteProductAsync(string id);
+        Task<Product> AddBidAsync(string productId, BidHistory bid);
+
     }
 }

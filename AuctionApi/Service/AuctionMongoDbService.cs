@@ -14,7 +14,7 @@ namespace Services
         public AuctionMongoDBService(ILogger<AuctionMongoDBService> logger, IConfiguration configuration)
         {
             _logger = logger;
-            var connectionString = configuration["MongoConnectionString"] ?? "<blank>"; 
+            var connectionString = configuration["MongoConnectionString"] ?? "<blank>";
             var databaseName = configuration["DatabaseName"] ?? "<blank>";
             var collectionName = configuration["CollectionName"] ?? "<blank>";
             _logger.LogInformation($"Connected to MongoDB using: {connectionString}");
@@ -45,7 +45,7 @@ namespace Services
 
         public async Task<Product> CreateProductAsync(Product product)
         {
-            product.Id = Guid.NewGuid(); 
+            product.Id = Guid.NewGuid();
             await _products.InsertOneAsync(product);
             return product;
         }
@@ -61,5 +61,21 @@ namespace Services
             var result = await _products.DeleteOneAsync(p => p.Id.ToString() == id);
             return result.DeletedCount > 0;
         }
+        public async Task<Product> AddBidAsync(string productId, BidHistory bid)
+        {
+            var filter = Builders<Product>.Filter.Eq(p => p.Id, Guid.Parse(productId));
+            var update = Builders<Product>.Update
+                .Push(p => p.BidHistory, bid)
+                .Set(p => p.currentbid, bid.BidAmount)
+                .Set(p => p.CurrentBidder, bid.BidderId);
+
+            var result = await _products.FindOneAndUpdateAsync(filter, update, new FindOneAndUpdateOptions<Product>
+            {
+                ReturnDocument = ReturnDocument.After
+            });
+
+            return result;
+        }
+
     }
 }
