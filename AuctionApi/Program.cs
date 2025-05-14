@@ -1,9 +1,19 @@
+using Microsoft.Net.Http.Headers;
 using Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+// Create globally availabel HttpClient for accesing the gateway.
+var gatewayUrl = builder.Configuration["GatewayUrl"] ?? "http://localhost:4000";
+builder.Services.AddHttpClient("gateway", client =>
+{
+    client.BaseAddress = new Uri(gatewayUrl);
+    client.DefaultRequestHeaders.Add(
+        HeaderNames.Accept, "application/json");
+});
 
 builder.Services.AddControllers();
 builder.Configuration.AddEnvironmentVariables();
