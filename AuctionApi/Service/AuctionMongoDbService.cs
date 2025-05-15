@@ -33,9 +33,9 @@ namespace Services
             }
         }
 
-        public async Task<Product> GetProductByIdAsync(string id)
+        public async Task<Product> GetProductByIdAsync(Guid id)
         {
-            return await _products.Find(p => p.Id.ToString() == id).FirstOrDefaultAsync();
+            return await _products.Find(p => p.Id == id).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()

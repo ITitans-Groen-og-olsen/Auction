@@ -24,7 +24,7 @@ public class AuctionController : ControllerBase
     }
 
     [HttpGet("GetProductById/{productId}")]
-    public Task<Product> GetProductById(string productId)
+    public Task<Product> GetProductById(Guid productId)
     {
         try
         {

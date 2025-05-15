@@ -1,0 +1,41 @@
+﻿@page "/Product/{id:guid}"
+@model ProductModel
+@{
+    ViewData["Title"] = "Product Details";
+}
+
+@if (Model.Product == null)
+{
+    <h2>Product not found</h2>
+}
+else
+{
+    <h2>@Model.Product.Name</h2>
+
+    <img src="@Model.Product.Image" alt="@Model.Product.Name" width="300" />
+
+    <p><strong>Description:</strong> @Model.Product.Description</p>
+    <p><strong>Brand:</strong> @Model.Product.Brand</p>
+    <p><strong>Start Price:</strong> @Model.Product.StartPrice.ToString("C")</p>
+    <p><strong>Current Bid:</strong> @Model.Product.currentbid?.ToString("C") ?? "No bids yet"</p>
+    <p><strong>End of Auction:</strong> @Model.Product.EndOfAuction.ToString("f")</p>
+
+    <h4>Bid History</h4>
+    @if (Model.Product.BidHistory?.Any() == true)
+    {
+        <ul>
+            @foreach (var bid in Model.Product.BidHistory.OrderByDescending(b => b.BidTime))
+            {
+                <li>
+                    Bidder ID: @bid.BidderId — Amount: @bid.BidAmount.ToString("C") — Time: @bid.BidTime.ToString("g")
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No bids yet.</p>
+    }
+
+      <a class="btn btn-link" href="/auction/Catalog"> Back to Catalog</a>
+}

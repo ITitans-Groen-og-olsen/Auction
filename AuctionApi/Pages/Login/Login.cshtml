@@ -1,0 +1,26 @@
+﻿@page "/Login"
+@using MyApp.Namespace
+@model MyApp.Namespace.LoginPageModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="LoginModel.Email" class="form-label">Email</label>
+        <input asp-for="LoginModel.Email" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="LoginModel.Password" class="form-label">Password</label>
+        <input asp-for="LoginModel.Password" type="password" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+    <a class="btn btn-link" href="/auction/Register">Create New Account</a>
+</form>
+
+@if (Model.LoginFailed)
+{
+    <div class="alert alert-danger mt-3">Invalid login credentials.</div>
+}

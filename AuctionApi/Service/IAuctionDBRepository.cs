@@ -4,7 +4,7 @@ namespace Services
 {
     public interface IAuctionDBRepository
     {
-        Task<Product> GetProductByIdAsync(string id);
+        Task<Product> GetProductByIdAsync(Guid id);
         Task<IEnumerable<Product>> GetAllProductsAsync();
         Task<Product> CreateProductAsync(Product product);
         Task<Product> UpdateProductAsync(string id, Product updatedProduct);
