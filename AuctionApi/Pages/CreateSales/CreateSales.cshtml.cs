@@ -1,21 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using Models;
-using System.Net.Http.Json;
 
-public class CreateSalesModel : PageModel
+public class AddProductModel : PageModel
 {
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly ILogger<CreateSalesModel> _logger;
-
-    public CreateSalesModel(IHttpClientFactory httpClientFactory, ILogger<CreateSalesModel> logger)
-    {
-        _clientFactory = httpClientFactory;
-        _logger = logger;
-    }
-
     [BindProperty]
-    public Product Product { get; set; } = new();
+    public Product Product { get; set; }
 
     [BindProperty]
     public IFormFile ImageFile { get; set; }
@@ -24,34 +19,30 @@ public class CreateSalesModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (!ModelState.IsValid) return Page();
+        if (!ModelState.IsValid || ImageFile == null)
+            return Page();
 
-        if (ImageFile != null && ImageFile.Length > 0)
+        // Convert image to Base64 string
+        using var ms = new MemoryStream();
+        await ImageFile.CopyToAsync(ms);
+        Product.Image = Convert.ToBase64String(ms.ToArray());
+
+        // Send product to API
+        using var httpClient = new HttpClient();
+        httpClient.BaseAddress = new Uri("http://auction-service:8080");
+
+        var json = JsonSerializer.Serialize(Product);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await httpClient.PostAsync("/auction", content);
+
+        if (response.IsSuccessStatusCode)
         {
-            using var ms = new MemoryStream();
-            await ImageFile.CopyToAsync(ms);
-            var imageBytes = ms.ToArray();
-            Product.Image = Convert.ToBase64String(imageBytes);
+            Submitted = true;
+            return Page();
         }
 
-        try
-{
-    using HttpClient client = _clientFactory.CreateClient("gateway");
-    var response = await client.PostAsJsonAsync("Auction/AddProduct", Product);
-
-    if (response.IsSuccessStatusCode)
-    {
-        Submitted = true;
-        return RedirectToPage("auction/Catalog");
-    }
-
-    ModelState.AddModelError(string.Empty, "Noget gik galt. Prøv igen.");
-}
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Failed to send product to Auction/AddProduct");
-    ModelState.AddModelError(string.Empty, "Der opstod en fejl: " + ex.Message);
-}
-        return RedirectToPage("auction/Catalog");
+        ModelState.AddModelError("", "Der opstod en fejl ved oprettelse af produktet.");
+        return Page();
     }
 }
