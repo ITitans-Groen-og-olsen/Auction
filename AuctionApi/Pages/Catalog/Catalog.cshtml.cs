@@ -16,16 +16,22 @@ namespace MyApp.Namespace
         }
 
         public async Task OnGetAsync()
-        {
-            try
-            {
-                using HttpClient client = _clientFactory.CreateClient("gateway");
-                Products = await client.GetFromJsonAsync<List<Product>>("Auction/GetAllProducts");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to fetch products: {ex.Message}");
-            }
-        }
+{
+    try
+    {
+        using HttpClient client = _clientFactory.CreateClient("gateway");
+        var allProducts = await client.GetFromJsonAsync<List<Product>>("Auction/GetAllProducts");
+
+        // ✅ Only include approved products that have not expired
+        Products = allProducts?
+            .Where(p => p.IsApproved && p.EndOfAuction > DateTime.UtcNow)
+            .ToList();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to fetch products: {ex.Message}");
+    }
+}
+
     }
 }
