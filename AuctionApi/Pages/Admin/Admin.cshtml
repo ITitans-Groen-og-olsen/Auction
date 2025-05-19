@@ -1,4 +1,200 @@
-﻿@page
+﻿@page "/Admin"
 @model MyApp.Namespace.AdminModel
-@{
-}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Admin Panel</title>
+
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 400px;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        button {
+            margin: 5px 5px 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+
+    <section>
+        <h2>1. Afventer Godkendelse</h2>
+        <ul id="pendingList"></ul>
+    </section>
+
+    <section>
+        <h2>2. Aktive Auktioner</h2>
+        <ul id="activeList"></ul>
+    </section>
+
+   
+
+    <!-- ✅ Edit Auction Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                Rediger Auktion
+                <span class="modal-close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editForm">
+                <input name="Id" type="hidden" />
+                <label>Titel: <input name="Name" /></label><br />
+                <label>Beskrivelse: <input name="Description" /></label><br />
+                <label>Minimumspris: <input name="StartPrice" type="number" step="0.01" /></label><br />
+                <label>Deadline: <input name="EndOfAuction" type="datetime-local" /></label><br />
+                <button type="submit">Gem</button>
+                <button type="button" onclick="closeEditModal()">Annuller</button>
+            </form>
+        </div>
+    </div>
+
+   
+    <script>
+        const loadProducts = async () => {
+            const res = await fetch('/Auction/GetAllProducts');
+            const products = await res.json();
+
+            const now = new Date();
+            const pendingList = document.getElementById('pendingList');
+            const activeList = document.getElementById('activeList');
+            pendingList.innerHTML = '';
+            activeList.innerHTML = '';
+
+            products.forEach(p => {
+                const li = document.createElement('li');
+                li.textContent = `${p.name} - ${p.startPrice} kr`;
+
+                const isApproved = p.isApproved === true;
+                const hasBids = p.bidHistory && p.bidHistory.length > 0;
+                const notEnded = new Date(p.endOfAuction) > now;
+
+                if (!isApproved) {
+                    const approveBtn = document.createElement('button');
+                    approveBtn.textContent = "Godkend";
+                    approveBtn.onclick = () => confirmApproval(p);
+
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = "Rediger";
+                    editBtn.onclick = () => openEditModal(p);
+
+                    li.appendChild(approveBtn);
+                    li.appendChild(editBtn);
+                    pendingList.appendChild(li);
+                }
+
+                if (notEnded && isApproved) {
+                    const detailBtn = document.createElement('button');
+                    detailBtn.textContent = "Vis bud";
+                    detailBtn.onclick = () => alert(JSON.stringify(p.bidHistory || [], null, 2));
+
+                    const timeLeft = Math.round((new Date(p.endOfAuction) - now) / 60000);
+                    li.append(` - Slutter om ${timeLeft} min`);
+                    li.appendChild(detailBtn);
+                    activeList.appendChild(li);
+                }
+            });
+        };
+
+        const confirmApproval = async (product) => {
+            if (confirm("Er du sikker på du vil godkende dette produkt?")) {
+                product.isApproved = true;
+                await fetch(`/Auction/UpdateProduct/${product.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(product)
+                });
+                loadProducts();
+            }
+        };
+
+        const openEditModal = (product) => {
+            const form = document.getElementById('editForm');
+            form.Id.value = product.id;
+            form.Name.value = product.name;
+            form.Description.value = product.description || '';
+            form.StartPrice.value = product.startPrice;
+            form.EndOfAuction.value = new Date(product.endOfAuction).toISOString().slice(0, 16);
+            document.getElementById('editModal').style.display = 'block';
+        };
+
+        const closeEditModal = () => {
+            document.getElementById('editModal').style.display = 'none';
+        };
+
+        document.getElementById('editForm').onsubmit = async (e) => {
+            e.preventDefault();
+
+            const form = e.target;
+            const id = form.Id.value;
+
+            const res = await fetch(`/Auction/GetProductById/${id}`);
+            const product = await res.json();
+
+            product.name = form.Name.value;
+            product.description = form.Description.value;
+            product.startPrice = parseFloat(form.StartPrice.value);
+            product.endOfAuction = new Date(form.EndOfAuction.value).toISOString();
+
+            await fetch(`/Auction/UpdateProduct/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            });
+
+            closeEditModal();
+            loadProducts();
+        };
+
+        const showAdminModal = () => {
+            document.getElementById('adminModal').style.display = 'block';
+        };
+
+        const closeAdminModal = () => {
+            document.getElementById('adminModal').style.display = 'none';
+        };
+
+        // Close modal if background is clicked
+        window.onclick = function(event) {
+            const editModal = document.getElementById('editModal');
+            const adminModal = document.getElementById('adminModal');
+            if (event.target === editModal) closeEditModal();
+            if (event.target === adminModal) closeAdminModal();
+        };
+
+        loadProducts();
+    </script>
+</body>
+</html>

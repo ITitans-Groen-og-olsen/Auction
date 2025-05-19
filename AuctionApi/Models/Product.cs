@@ -17,4 +17,7 @@ public class Product
     public DateTime EndOfAuction { get; set; }
     public int? CurrentBidder { get; set; }
     public List<BidHistory>? BidHistory { get; set; }
+
+        public bool IsApproved { get; set; } = false;
+
 }
