@@ -4,6 +4,9 @@
     ViewData["Title"] = "Product Details";
 }
 
+<link href="~/Product/product.css" rel="stylesheet" />
+
+
 @if (Model.Product == null)
 {
     <h2>Product not found</h2>
@@ -37,5 +40,31 @@ else
         <p>No bids yet.</p>
     }
 
-      <a class="btn btn-link" href="/auction/Catalog"> Back to Catalog</a>
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <h4>Place a Bid</h4>
+
+        <form method="post">
+            <div class="mb-3">
+                <label for="bidAmount" class="form-label">Your Bid</label>
+                <input type="number" step="0.01" name="BidAmount" class="form-control" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Place Bid</button>
+        </form>
+
+        @if (Model.ErrorMessage != null)
+        {
+            <div class="alert alert-danger mt-2">@Model.ErrorMessage</div>
+        }
+        @if (Model.SuccessMessage != null)
+        {
+            <div class="alert alert-success mt-2">@Model.SuccessMessage</div>
+        }
+    }
+    else
+    {
+        <p><strong>Log in to place a bid.</strong></p>
+    }
+
+    <a class="btn btn-link mt-3" href="/auction/Catalog">Back to Catalog</a>
 }

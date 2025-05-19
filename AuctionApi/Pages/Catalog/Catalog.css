@@ -1,0 +1,70 @@
+/* catalog.css */
+
+/* Container Padding */
+.container {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Auction Title */
+h1 {
+  font-weight: 600;
+  font-size: 2rem;
+}
+
+/* Card Styling */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 0.5rem;
+}
+
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Image */
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+/* Card Content */
+.card-body {
+  padding: 1rem;
+}
+
+/* Product Title */
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Description Text */
+.card-text {
+  margin-bottom: 0.5rem;
+  color: #444;
+}
+
+/* Muted Info (End Time) */
+.card-text.text-muted {
+  font-size: 0.9rem;
+  color: #6c757d !important;
+}
+
+/* Link Reset */
+a.text-decoration-none.text-dark:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Empty Message */
+p {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 2rem;
+  text-align: center;
+}

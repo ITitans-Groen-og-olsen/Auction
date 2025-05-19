@@ -5,6 +5,8 @@
 }
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/css/Catalog/Catalog.css" />
+
 
 <div class="container py-4">
     <h1 class="mb-4">Aktive Auktioner</h1>
@@ -16,7 +18,6 @@
             {
                 <div class="col">
                     <a href="/auction/Product/@item.Id" class="text-decoration-none text-dark">
-
                         <div class="card h-100 shadow-sm">
                             <img src="@item.Image" class="card-img-top" style="height: 200px; object-fit: cover;" alt="@item.Name" />
                             <div class="card-body">
