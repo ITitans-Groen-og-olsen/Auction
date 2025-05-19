@@ -46,11 +46,11 @@ public class AuctionTest
             };
 
             _mockAuctionDBRepository
-                .Setup(repo => repo.GetProductByIdAsync(productId.ToString()))
+                .Setup(repo => repo.GetProductByIdAsync(productId))
                 .ReturnsAsync(product);
 
             // Act
-            var result = await _controller.GetProductById(productId.ToString());
+            var result = await _controller.GetProductById(productId);
 
             // Assert
             Assert.IsNotNull(result);

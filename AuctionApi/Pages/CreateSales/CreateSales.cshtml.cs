@@ -5,46 +5,53 @@ using System.Net.Http.Json;
 
 public class CreateSalesModel : PageModel
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpClientFactory _clientFactory;
+    private readonly ILogger<CreateSalesModel> _logger;
 
-    public CreateSalesModel(IHttpClientFactory httpClientFactory)
+    public CreateSalesModel(IHttpClientFactory httpClientFactory, ILogger<CreateSalesModel> logger)
     {
-        _httpClientFactory = httpClientFactory;
+        _clientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     [BindProperty]
     public Product Product { get; set; } = new();
 
-    public bool Submitted { get; set; } = false;
+    [BindProperty]
+    public IFormFile ImageFile { get; set; }
+
+    public bool Submitted { get; set; }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (!User.Identity?.IsAuthenticated ?? true)
+        if (!ModelState.IsValid) return Page();
+
+        if (ImageFile != null && ImageFile.Length > 0)
         {
-            return Unauthorized();
+            using var ms = new MemoryStream();
+            await ImageFile.CopyToAsync(ms);
+            var imageBytes = ms.ToArray();
+            Product.Image = Convert.ToBase64String(imageBytes);
         }
 
-        // Set default fields
-        Product.Id = Guid.NewGuid();
-        Product.currentbid = null;
-        Product.BidHistory = new List<BidHistory>();
-        Product.CurrentBidder = null;
-        Product.Brand = "Brugerforslag";
-        // You can add a status field in DB manually, or in another property if needed
+        try
+{
+    using HttpClient client = _clientFactory.CreateClient("gateway");
+    var response = await client.PostAsJsonAsync("Auction/AddProduct", Product);
 
-        var client = _httpClientFactory.CreateClient("gateway");
+    if (response.IsSuccessStatusCode)
+    {
+        Submitted = true;
+        return RedirectToPage("auction/Catalog");
+    }
 
-        var response = await client.PostAsJsonAsync("Auction/CreateProduct", Product);
-
-        if (response.IsSuccessStatusCode)
-        {
-            Submitted = true;
-        }
-        else
-        {
-            ModelState.AddModelError(string.Empty, "Noget gik galt ved oprettelse.");
-        }
-
-        return Page();
+    ModelState.AddModelError(string.Empty, "Noget gik galt. Prøv igen.");
+}
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Failed to send product to Auction/AddProduct");
+    ModelState.AddModelError(string.Empty, "Der opstod en fejl: " + ex.Message);
+}
+        return RedirectToPage("auction/Catalog");
     }
 }

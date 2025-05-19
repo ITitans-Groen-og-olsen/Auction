@@ -14,7 +14,7 @@ else
 {
     <h2>Opret Salgsforslag</h2>
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
     <div class="mb-3">
         <label for="Name" class="form-label">Titel</label>
         <input asp-for="Product.Name" class="form-control" required />
@@ -30,9 +30,9 @@ else
         <input asp-for="Product.Brand" class="form-control" required />
     </div>
 
-    <div class="mb-3">
-        <label for="Image" class="form-label">Billede (URL)</label>
-        <input asp-for="Product.Image" class="form-control" required />
+     <div class="mb-3">
+        <label for="ImageFile" class="form-label">Upload billede</label>
+        <input type="file" asp-for="ImageFile" class="form-control" accept="image/*" required />
     </div>
 
     <div class="mb-3">
