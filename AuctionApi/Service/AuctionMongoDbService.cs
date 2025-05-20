@@ -50,17 +50,6 @@ namespace Services
             return product;
         }
 
-        public async Task<bool> AddImageToProductItem(Guid productId, Uri imageUri)
-{
-    var filter = Builders<Product>.Filter.Eq(p => p.Id, productId);
-    var update = Builders<Product>.Update
-        .Set(p => p.Image, imageUri.ToString());
-
-    var result = await _products.UpdateOneAsync(filter, update);
-    return result.ModifiedCount > 0;
-}
-
-
         public async Task<Product> UpdateProductAsync(string id, Product updatedProduct)
         {
             await _products.ReplaceOneAsync(p => p.Id.ToString() == id, updatedProduct);

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Services;
-using System.ComponentModel;
 using System.Diagnostics;
 
 namespace AuctionService.Controllers;
@@ -11,7 +10,6 @@ namespace AuctionService.Controllers;
 public class AuctionController : ControllerBase
 {
     private readonly ILogger<AuctionController> _logger;
-    private string _imagePath = string.Empty;
     private readonly IAuctionDBRepository _productRepository;
 
     public AuctionController(ILogger<AuctionController> logger, IAuctionDBRepository productRepository)
@@ -54,80 +52,18 @@ public class AuctionController : ControllerBase
     }
 
     [HttpPost("AddProduct")]
-public async Task<IActionResult> AddProduct(
-    [FromForm] string? Name,
-    [FromForm] decimal StartPrice,
-    [FromForm] string? Description,
-    [FromForm] IFormFile? Image)
+    public Task<Product> AddProduct([FromBody] Product product)
     {
-        var product = new Product
+        try
         {
-            Id = Guid.NewGuid(),
-            Name = Name,
-            Description = Description,
-            StartPrice = StartPrice,
-            Image = null, 
-            EndOfAuction = DateTime.UtcNow.AddDays(14)
-        };
-
-        await _productRepository.CreateProductAsync(product);
-        return Ok(product);
-    }
-
-[HttpPost("AddImage"), DisableRequestSizeLimit]
-public async Task<IActionResult> UploadImage()
-{
-    List<Uri> images = new List<Uri>();
-
-    try
-    {
-        var formId = Request.Form["guid"];
-        if (string.IsNullOrEmpty(formId))
-            return BadRequest("The product id could not be identified.");
-
-        Guid productId = new Guid(formId!);
-        var result = await _productRepository.GetProductByIdAsync(productId);
-
-        if (result != null)
-        {
-            foreach (var formFile in Request.Form.Files)
-            {
-                if (formFile.Length > 0)
-                {
-                    var fileName = "image-" + Guid.NewGuid() + ".jpg";
-                    var fullPath = Path.Combine(_imagePath, fileName);
-                    _logger.LogInformation($"Saving file {fullPath}");
-
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        await formFile.CopyToAsync(stream);
-                    }
-
-                    var imageURI = new Uri(fileName, UriKind.RelativeOrAbsolute);
-
-                    bool updated = await _productRepository.AddImageToProductItem(productId, imageURI);
-                    if (updated)
-                        images.Add(imageURI);
-                }
-                else
-                {
-                    return BadRequest("Empty file submitted.");
-                }
-            }
+            return _productRepository.CreateProductAsync(product);
         }
-        else
+        catch (Exception ex)
         {
-            return NotFound("Product not found.");
+            _logger.LogError(ex.Message);
+            throw;
         }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError("Upload image failure: {0}", ex.Message);
-        return StatusCode(500, "Internal server error.");
-    }
-
-    return Ok(images);
-}
 
 
 
