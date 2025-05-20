@@ -1,57 +1,85 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Models;
-using System.Net.Http.Json;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.IO;
+using System.Text.Json;
+using System.Text;
+using System.Net.Http.Headers;
 
-public class CreateSalesModel : PageModel
+public class ImageUploadModel : PageModel
 {
+    [BindProperty]
+    public string? Name { get; set; }
+
+    [BindProperty]
+    public decimal? StartPrice { get; set; }
+
+    [BindProperty]
+    public string? Description { get; set; }
+
+    [BindProperty]
+    public IFormFile? UploadedImage { get; set; }
+
+    public string Base64Image { get; set; }
+
     private readonly IHttpClientFactory _clientFactory;
-    private readonly ILogger<CreateSalesModel> _logger;
 
-    public CreateSalesModel(IHttpClientFactory httpClientFactory, ILogger<CreateSalesModel> logger)
+    public ImageUploadModel(IHttpClientFactory clientFactory)
     {
-        _clientFactory = httpClientFactory;
-        _logger = logger;
+        _clientFactory = clientFactory;
     }
-
-    [BindProperty]
-    public Product Product { get; set; } = new();
-
-    [BindProperty]
-    public IFormFile ImageFile { get; set; }
-
-    public bool Submitted { get; set; }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (!ModelState.IsValid) return Page();
+        if (!ModelState.IsValid)
+            return Page();
 
-        if (ImageFile != null && ImageFile.Length > 0)
+        var client = _clientFactory.CreateClient("gateway");
+
+        // STEP 1: Create Product using form data
+        var formContent = new MultipartFormDataContent();
+        formContent.Add(new StringContent(Name ?? ""), "Name");
+        formContent.Add(new StringContent(StartPrice?.ToString() ?? "0"), "StartPrice");
+        formContent.Add(new StringContent(Description ?? ""), "Description");
+
+
+        var productResponse = await client.PostAsync("Auction/AddProduct", formContent);
+
+        if (!productResponse.IsSuccessStatusCode)
         {
-            using var ms = new MemoryStream();
-            await ImageFile.CopyToAsync(ms);
-            var imageBytes = ms.ToArray();
-            Product.Image = Convert.ToBase64String(imageBytes);
+            ModelState.AddModelError("", "Failed to create product.");
+            return Page();
         }
 
-        try
-{
-    using HttpClient client = _clientFactory.CreateClient("gateway");
-    var response = await client.PostAsJsonAsync("Auction/AddProduct", Product);
+        var createdProductJson = await productResponse.Content.ReadAsStringAsync();
+        var createdProduct = JsonSerializer.Deserialize<Product>(createdProductJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-    if (response.IsSuccessStatusCode)
-    {
-        Submitted = true;
-        return RedirectToPage("auction/Catalog");
-    }
+        // STEP 2: Upload image (same as before)
+        if (UploadedImage != null && UploadedImage.Length > 0)
+        {
+            using var ms = new MemoryStream();
+            await UploadedImage.CopyToAsync(ms);
+            var imageBytes = ms.ToArray();
 
-    ModelState.AddModelError(string.Empty, "Noget gik galt. Prøv igen.");
-}
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Failed to send product to Auction/AddProduct");
-    ModelState.AddModelError(string.Empty, "Der opstod en fejl: " + ex.Message);
-}
-        return RedirectToPage("auction/Catalog");
+            Base64Image = $"data:{UploadedImage.ContentType};base64,{Convert.ToBase64String(imageBytes)}";
+
+            var imageContent = new MultipartFormDataContent();
+            imageContent.Add(new StringContent(createdProduct.Id.ToString()), "guid");
+
+            var byteContent = new ByteArrayContent(imageBytes);
+            byteContent.Headers.ContentType = new MediaTypeHeaderValue(UploadedImage.ContentType);
+            imageContent.Add(byteContent, "formFile", UploadedImage.FileName);
+
+            var imageResponse = await client.PostAsync("Auction/AddImage", imageContent);
+
+            if (!imageResponse.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError("", "Product created, but image upload failed.");
+            }
+        }
+
+        return Page();
     }
 }

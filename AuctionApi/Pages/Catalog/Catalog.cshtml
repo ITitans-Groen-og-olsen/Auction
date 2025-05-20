@@ -1,45 +1,33 @@
 ﻿@page "/Catalog"
 @model MyApp.Namespace.CatalogListModel
-@{
-        Layout = "_Layout";
-    ViewData["Title"] = "Auction Catalog";
+@using System
+
+<h1>Catalog</h1>
+
+@if (Model.Products == null || !Model.Products.Any())
+{
+    <p>No products available.</p>
 }
+else
+{
+    <div>
+        @foreach (var product in Model.Products)
+        {
+            <div style="margin-bottom:30px;">
+                <h3>@product.Name</h3>
+                <p>Start Price: @product.StartPrice</p>
+                <p>Auction ends: @product.EndOfAuction.ToLocalTime().ToString("g")</p>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="~/css/Catalog/Catalog.css" />
-
-
-<div class="container py-4">
-    <h1 class="mb-4">Aktive Auktioner</h1>
-
-    @if (Model.Products != null && Model.Products.Any())
-    {
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            @foreach (var item in Model.Products)
-            {
-                <div class="col">
-                    <a href="/auction/Product/@item.Id" class="text-decoration-none text-dark">
-                        <div class="card h-100 shadow-sm">
-                            <img src="@item.Image" class="card-img-top" style="height: 200px; object-fit: cover;" alt="@item.Name" />
-                            <div class="card-body">
-                                <h5 class="card-title">@item.Name</h5>
-                                <p class="card-text">@item.Description</p>
-                                <p class="card-text"><strong>Start:</strong> @item.StartPrice.ToString("C")</p>
-                                <p class="card-text">
-                                    <strong>Bud:</strong> @item.currentbid?.ToString("C") ?? "No bids"
-                                </p>
-                                <p class="card-text text-muted">
-                                    Slutter: @item.EndOfAuction.ToString("g")
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <p>No auctions found.</p>
-    }
-</div>
+                @if (product.Image != null && product.Image.Length > 0)
+                {
+                    var imgSrc = $"data:image/png;base64,{product.Image}"; // or image/jpeg if needed
+                    <img src="@imgSrc" alt="@product.Name" style="max-width:300px; max-height:300px;" />
+                }
+                else
+                {
+                    <p><i>No image available.</i></p>
+                }
+            </div>
+        }
+    </div>
+}

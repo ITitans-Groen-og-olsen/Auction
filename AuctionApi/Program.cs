@@ -14,6 +14,8 @@ builder.Services.AddHttpClient("gateway", client =>
 // Razor Pages + Controllers
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
+builder.Services.AddHttpClient(); 
+
 
 // MongoDB repository
 builder.Services.AddScoped<IAuctionDBRepository, AuctionMongoDBService>();
