@@ -1,48 +1,67 @@
 using Microsoft.Net.Http.Headers;
 using Services;
+using NLog;
+using NLog.Web;
 
-var builder = WebApplication.CreateBuilder(args);
+var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings()
+.GetCurrentClassLogger();
 
-// Setup gateway client (used to call backend APIs)
-var gatewayUrl = builder.Configuration["GatewayUrl"] ?? "http://localhost:4000/";
-builder.Services.AddHttpClient("gateway", client =>
+try
 {
-    client.BaseAddress = new Uri(gatewayUrl);
-    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
-});
+    logger.Debug("Starting application");
 
-// Razor Pages + Controllers
-builder.Services.AddRazorPages();
-builder.Services.AddControllers();
+    var builder = WebApplication.CreateBuilder(args);
 
-// MongoDB repository
-builder.Services.AddScoped<IAuctionDBRepository, AuctionMongoDBService>();
+    // Setup gateway client (used to call backend APIs)
+    var gatewayUrl = builder.Configuration["GatewayUrl"] ?? "http://localhost:5001/";
+    builder.Services.AddHttpClient("gateway", client =>
+    {
+        client.BaseAddress = new Uri(gatewayUrl);
+        client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+    });
 
-// Swagger for API testing
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+    // Razor Pages + Controllers
+    builder.Services.AddRazorPages();
+    builder.Services.AddControllers();
 
-var app = builder.Build();
+    // MongoDB repository
+    builder.Services.AddScoped<IAuctionDBRepository, AuctionMongoDBService>();
 
-// Dev-only Swagger
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    // Swagger for API testing
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+
+    // NLog configuration
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
+
+    var app = builder.Build();
+
+    // Dev-only Swagger
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    // app.UseHttpsRedirection();
+    app.UseStaticFiles();
+    app.UseRouting();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.MapRazorPages();
+
+    app.Run();
 }
-
-// Redirect HTTP -> HTTPS
-app.UseHttpsRedirection();
-
-// Optional: use static files (e.g., images, CSS)
-app.UseStaticFiles();
-
-// Enable authentication (even without Identity, so you can still simulate logged-in state via cookies or middleware)
-app.UseRouting();
-app.UseAuthorization();
-
-// Route endpoints
-app.MapControllers();
-app.MapRazorPages();
-
-app.Run();
+catch (Exception ex)
+{
+    // Catch any unhandled exceptions during startup
+    logger.Error(ex, "Application stopped due to an exception");
+    throw;
+}
+finally
+{
+    // Ensure logs are flushed and resources are released
+    LogManager.Shutdown();
+}

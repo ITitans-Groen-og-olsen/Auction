@@ -14,9 +14,15 @@ namespace Services
         public AuctionMongoDBService(ILogger<AuctionMongoDBService> logger, IConfiguration configuration)
         {
             _logger = logger;
-            var connectionString = configuration["MongoConnectionString"] ?? "<blank>";
-            var databaseName = configuration["DatabaseName"] ?? "<blank>";
-            var collectionName = configuration["CollectionName"] ?? "<blank>";
+           var connectionString = Environment.GetEnvironmentVariable("MongoConnectionString") 
+                                    ?? configuration.GetValue<string>("MongoConnectionString");
+
+        var databaseName = Environment.GetEnvironmentVariable("DatabaseName") 
+                           ?? configuration.GetValue<string>("DatabaseName", "AuctionDB");
+
+        var collectionName = Environment.GetEnvironmentVariable("CollectionName") 
+                             ?? configuration.GetValue<string>("CollectionName", "Products");
+
             _logger.LogInformation($"Connected to MongoDB using: {connectionString}");
             _logger.LogInformation($" Using database: {databaseName}");
             _logger.LogInformation($" Using Collection: {collectionName}");
