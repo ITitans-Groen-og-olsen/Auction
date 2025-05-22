@@ -19,13 +19,13 @@ else
     <img src="data:image/png;base64,@Model.Product.Image" alt="@Model.Product.Name" width="300" />
 
 
-    <p><strong>Description:</strong> @Model.Product.Description</p>
+    <p><strong>Beskrivelse:</strong> @Model.Product.Description</p>
     <p><strong>Brand:</strong> @Model.Product.Brand</p>
-    <p><strong>Start Price:</strong> @Model.Product.StartPrice.ToString("C")</p>
-    <p><strong>Current Bid:</strong> @Model.Product.currentbid?.ToString("C") ?? "No bids yet"</p>
-    <p><strong>End of Auction:</strong> @Model.Product.EndOfAuction.ToString("f")</p>
+    <p><strong>Start Pris:</strong> @Model.Product.StartPrice.ToString("C")</p>
+    <p><strong>Højeste Bud:</strong> @Model.Product.currentbid?.ToString("C") ?? "ingen  bud endnu"</p>
+    <p><strong>Auktionens slutdato:</strong> @Model.Product.EndOfAuction.ToString("f")</p>
 
-    <h4>Bid History</h4>
+    <h4>Bud Historik</h4>
     @if (Model.Product.BidHistory?.Any() == true)
     {
         <ul>
@@ -39,19 +39,19 @@ else
     }
     else
     {
-        <p>No bids yet.</p>
+        <p>ingen bud endnu.</p>
     }
 
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {
-        <h4>Place a Bid</h4>
+        <h4>Placer et Bud</h4>
 
         <form method="post">
             <div class="mb-3">
-                <label for="bidAmount" class="form-label">Your Bid</label>
+                <label for="bidAmount" class="form-label">Dit Bud</label>
                 <input type="number" step="0.01" name="BidAmount" class="form-control" required />
             </div>
-            <button type="submit" class="btn btn-primary">Place Bid</button>
+            <button type="submit" class="btn btn-primary">Placer Bud</button>
         </form>
 
         @if (Model.ErrorMessage != null)
@@ -65,8 +65,8 @@ else
     }
     else
     {
-        <p><strong>Log in to place a bid.</strong></p>
+        <p><strong>Log in for alt placere et bud.</strong></p>
     }
 
-    <a class="btn btn-link mt-3" href="/auction/Catalog">Back to Catalog</a>
+    <a class="btn btn-link mt-3" href="/auction/Catalog">Tilbage til Kataloget</a>
 }
