@@ -18,51 +18,76 @@ namespace MyApp.Namespace
         [BindProperty]
         public LoginInputModel LoginModel { get; set; } = new();
 
-        [BindProperty]
-        public RegisterInputModel RegisterModel { get; set; } = new();
+        // [BindProperty]
+        // public RegisterInputModel RegisterModel { get; set; } = new();
 
         public bool LoginFailed { get; set; }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var client = _clientFactory.CreateClient("gateway");
-            var endpoint = LoginModel.Role == "Admin" ? "admin/login" : "user/login";
+            Console.WriteLine($"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss");
 
-            var response = await client.PostAsJsonAsync(endpoint, LoginModel);
-            if (response.IsSuccessStatusCode)
+            foreach (var entry in ModelState)
             {
-                return RedirectToPage(LoginModel.Role == "Admin" ? "/AdminDashboard" : "/UserDashboard");
+                Console.WriteLine($"Key: {entry.Key}, Value: {entry.Value?.AttemptedValue}, Errors: {entry.Value?.Errors.Count}");
             }
+
+
+            var client = _clientFactory.CreateClient("gateway");
+            var endpoint = "/User/login";
+
+            //LoginModel.Role == "Admin" ? "admin/login" : "User/login";
+            try
+            {
+                var response = await client.PostAsJsonAsync(endpoint, LoginModel);
+                Console.WriteLine($"endpoint for user/login {endpoint}");
+
+                Console.WriteLine($"Email: {LoginModel.EmailAddress}");
+                Console.WriteLine($"Password: {LoginModel.Password}");
+
+
+
+                var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Status: {response.StatusCode}, Content: {content}");
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToPage("/UserDashboard");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+
 
             LoginFailed = true;
             return Page();
         }
 
-        public async Task<IActionResult> OnPostRegisterAsync()
-        {
-            var client = _clientFactory.CreateClient("gateway");
 
-            var response = await client.PostAsJsonAsync("user/register", RegisterModel);
-            if (response.IsSuccessStatusCode)
-            {
-                return RedirectToPage("/UserDashboard");
-            }
+        // public async Task<IActionResult> OnPostRegisterAsync()
+        // {
+        //     var client = _clientFactory.CreateClient("gateway");
 
-            var errorContent = await response.Content.ReadAsStringAsync();
-            ModelState.AddModelError(string.Empty, $"Registration failed: {errorContent}");
-            return Page();
-        }
+        //     var response = await client.PostAsJsonAsync("User/register", RegisterModel);
+        //     if (response.IsSuccessStatusCode)
+        //     {
+        //         return RedirectToPage("/UserDashboard");
+        //     }
+
+        //     var errorContent = await response.Content.ReadAsStringAsync();
+        //     ModelState.AddModelError(string.Empty, $"Registration failed: {errorContent}");
+        //     return Page();
+        // }
 
         public class LoginInputModel
         {
-            [Required]
-            public string Email { get; set; } = "";
+            public string EmailAddress { get; set; }
 
-            [Required]
-            public string Password { get; set; } = "";
+            public string Password { get; set; }
 
-            [Required]
-            public string Role { get; set; } = "User";
         }
 
         public class RegisterInputModel

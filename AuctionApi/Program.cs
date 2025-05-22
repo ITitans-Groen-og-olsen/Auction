@@ -19,6 +19,7 @@ try
         client.BaseAddress = new Uri(gatewayUrl);
         client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
     });
+    Console.WriteLine($"Gateway set to{gatewayUrl}");
 
     // Razor Pages + Controllers
     builder.Services.AddRazorPages();
