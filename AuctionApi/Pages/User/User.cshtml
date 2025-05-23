@@ -1,5 +1,68 @@
 ﻿@page "/UserDashboard"
 @model MyApp.Namespace.UserModel
+@inject IHttpClientFactory HttpClientFactory
 
-<h1>Hello, World!</h1>
-<p>Welcome to your User Dashboard.</p>
+@{
+    ViewData["Title"] = "User Dashboard";
+}
+
+<h2>User Dashboard</h2>
+
+@if (Model.LoadError)
+{
+    <div class="alert alert-danger">Failed to load user or bid data.</div>
+}
+
+<h4>Active Bids</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Auction Title</th>
+            <th>Your Bid</th>
+            <th>Highest Bid</th>
+            <th>Status</th>
+            <th>Time Left</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var bid in Model.ActiveBids)
+        {
+            <tr>
+                <td>@bid.AuctionTitle</td>
+                <td>@bid.YourBid</td>
+                <td>@bid.HighestBid</td>
+                <td>@bid.Status</td>
+                <td>@bid.TimeLeft</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">Edit Profile</button>
+
+<!-- Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" asp-page-handler="UpdateProfile">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">First Name</label><input asp-for="User.FirstName" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Last Name</label><input asp-for="User.LastName" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Address</label><input asp-for="User.Address" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Postal Code</label><input asp-for="User.PostalCode" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">City</label><input asp-for="User.City" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Phone</label><input asp-for="User.PhoneNumber" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Email</label><input asp-for="User.Email" class="form-control" /></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

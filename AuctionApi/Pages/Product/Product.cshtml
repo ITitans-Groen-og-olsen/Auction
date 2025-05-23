@@ -1,12 +1,11 @@
-﻿@page "{id:guid}"
+﻿@page "/Product/{id:guid}"
 @model ProductModel
 @{
-            Layout = "_Layout";
+    Layout = "_Layout";
     ViewData["Title"] = "Product Details";
 }
 
 <link href="~/Product/product.css" rel="stylesheet" />
-
 
 @if (Model.Product == null)
 {
@@ -18,11 +17,10 @@ else
 
     <img src="data:image/png;base64,@Model.Product.Image" alt="@Model.Product.Name" width="300" />
 
-
     <p><strong>Beskrivelse:</strong> @Model.Product.Description</p>
     <p><strong>Brand:</strong> @Model.Product.Brand</p>
     <p><strong>Start Pris:</strong> @Model.Product.StartPrice.ToString("C")</p>
-    <p><strong>Højeste Bud:</strong> @Model.Product.currentbid?.ToString("C") ?? "ingen  bud endnu"</p>
+    <p><strong>Højeste Bud:</strong> @Model.Product.currentbid?.ToString("C") ?? "ingen bud endnu"</p>
     <p><strong>Auktionens slutdato:</strong> @Model.Product.EndOfAuction.ToString("f")</p>
 
     <h4>Bud Historik</h4>
@@ -68,5 +66,5 @@ else
         <p><strong>Log in for alt placere et bud.</strong></p>
     }
 
-    <a class="btn btn-link mt-3" href="/auction/Catalog">Tilbage til Kataloget</a>
+    <a class="btn btn-link mt-3" href="/Catalog">Tilbage til Kataloget</a>
 }
