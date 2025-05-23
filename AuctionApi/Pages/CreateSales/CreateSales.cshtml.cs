@@ -6,9 +6,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Models;
 
+
+[IgnoreAntiforgeryToken]
 public class AddProductModel : PageModel
 {
     private readonly IHttpClientFactory _clientFactory;
+
 
     public AddProductModel(IHttpClientFactory clientFactory)
     {
@@ -19,20 +22,26 @@ public class AddProductModel : PageModel
     public Product Product { get; set; } = new();
 
     [BindProperty]
-    [Required]
     public IFormFile ImageFile { get; set; }
 
-    public bool Submitted { get; set; }
+    public bool Submitted { get; set; } = false;
 
     public async Task<IActionResult> OnPostAsync()
     {
         Console.WriteLine("ssssssssssssssssssssssssssssssssssssssssssssssssssssss");
 
+        if (!ModelState.IsValid)
+            return Page();
+
+
         foreach (var entry in ModelState)
         {
             Console.WriteLine($"Key: {entry.Key}, Errors: {entry.Value?.Errors.Count}");
         }
-       
+
+
+        var client = _clientFactory.CreateClient("gateway");
+        var endpoint = "Auction/AddProduct";
         try
         {
 
@@ -43,25 +52,22 @@ public class AddProductModel : PageModel
                 await ImageFile.CopyToAsync(ms);
                 Product.Image = Convert.ToBase64String(ms.ToArray());
             }
-            
-            var client = _clientFactory.CreateClient("gateway");
-            var endpoint = "/auction/AddProduct";
 
-            Console.WriteLine($"This is the endpoint: {endpoint}");
+            Console.WriteLine($"This is the endpoint before: {endpoint}");
+            Console.WriteLine($"This is the base adress {client.BaseAddress!}");
+
 
             var response = await client.PostAsJsonAsync(endpoint, Product);
 
+            Console.WriteLine($"This is the base adress {client.BaseAddress!}");
             Console.WriteLine($"This is the endpoint: {endpoint}");
-            Console.WriteLine($"This is the endpoint: {Product.Name}");
-            
+            Console.WriteLine($"This is the Prducts name: {Product.EndOfAuction}");
 
-
-        
 
             if (response.IsSuccessStatusCode)
             {
                 Submitted = true;
-                return RedirectToPage("/Admin"); // Or wherever you want to go
+                return Redirect("/auction/Admin"); // Or wherever you want to go
             }
         }
         catch (Exception ex)

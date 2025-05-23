@@ -28,10 +28,9 @@ public class ProductModel : PageModel
 
         try
         {
-            Console.WriteLine($"[OnGetAsync] Creating client for Product ID: {Id}");
             var client = _httpClientFactory.CreateClient("gateway");
 
-            Console.WriteLine($"[OnGetAsync] Requesting Auction/GetProductById/{Id}");
+    
             Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
 
             if (Product == null)
