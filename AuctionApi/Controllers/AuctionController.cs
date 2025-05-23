@@ -66,6 +66,8 @@ public class AuctionController : ControllerBase
         _logger.LogInformation("AddProduct called with Title: {Title}", product.Name);
         try
         {
+            product.IsApproved = false;
+            product.EndOfAuction = DateTime.Now.AddDays(30);
             var created = await _productRepository.CreateProductAsync(product);
             _logger.LogInformation("Product created with ID: {ProductId}", created.Id);
             return created;
