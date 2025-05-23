@@ -52,9 +52,10 @@ namespace MyApp.Namespace
 
 
                 if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToPage("/UserDashboard");
-                }
+{
+    return Redirect("/auction/UserDashboard");
+}
+
             }
             catch (Exception ex)
             {
