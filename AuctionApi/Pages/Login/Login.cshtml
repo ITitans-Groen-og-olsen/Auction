@@ -29,9 +29,8 @@
     </div>
     <button type="submit" class="btn btn-primary">Login</button>
 
-    <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#registerModal" id="registerButton">
-        Register as User
-    </button>
+    <a class="btn btn-link" href="/auction/Register">Registrer ny bruger</a>
+
 </form>
 
 @if (Model.LoginFailed)
@@ -48,52 +47,3 @@
         }
     </div>
 }
-
-<!-- Register Modal -->
-<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="post" asp-page-handler="Register">
-            @Html.AntiForgeryToken()
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="registerModalLabel">Register as User</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3"><label class="form-label">First Name</label><input asp-for="RegisterModel.FirstName" class="form-control" /></div>
-                    <div class="mb-3"><label class="form-label">Last Name</label><input asp-for="RegisterModel.LastName" class="form-control" /></div>
-                    <div class="mb-3"><label class="form-label">Address</label><input asp-for="RegisterModel.Address" class="form-control" /></div>
-                    <div class="mb-3"><label class="form-label">Postal Code</label><input asp-for="RegisterModel.PostalCode" class="form-control" /></div>
-                    <div class="mb-3"><label class="form-label">City</label><input asp-for="RegisterModel.City" class="form-control" /></div>
-                    <div class="mb-3"><label class="form-label">Phone Number</label><input asp-for="RegisterModel.PhoneNumber" class="form-control" /></div>
-                    <div class="mb-3"><label class="form-label">Email</label><input asp-for="RegisterModel.Email" class="form-control" /></div>
-                    <div class="mb-3"><label class="form-label">Password</label><input asp-for="RegisterModel.Password" type="password" class="form-control" /></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Register</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-@* @section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const roleSelector = document.getElementById("roleSelector");
-            const registerButton = document.getElementById("registerButton");
-
-            function toggleRegisterButton() {
-                if (roleSelector.value === "Admin") {
-                    registerButton.style.display = "none";
-                } else {
-                    registerButton.style.display = "inline-block";
-                }
-            }
-
-            toggleRegisterButton(); // Run on load
-            roleSelector.addEventListener("change", toggleRegisterButton);
-        });
-    </script>
-} *@
