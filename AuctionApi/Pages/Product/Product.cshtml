@@ -19,25 +19,34 @@ else
 
     <p><strong>Beskrivelse:</strong> @Model.Product.Description</p>
     <p><strong>Brand:</strong> @Model.Product.Brand</p>
-    <p><strong>Start Pris:</strong> @Model.Product.StartPrice.ToString("C")</p>
-    <p><strong>Højeste Bud:</strong> @Model.Product.currentbid?.ToString("C") ?? "ingen bud endnu"</p>
+    <p><strong>Start Pris:</strong> @Model.Product.StartPrice.ToString("C") Kroner</p>
+    <p><strong>Højeste Bud:</strong> @(Model.Product.currentbid?.ToString("C") ?? "Ingen bud endnu")</p>
     <p><strong>Auktionens slutdato:</strong> @Model.Product.EndOfAuction.ToString("f")</p>
 
+
     <h4>Bud Historik</h4>
+
     @if (Model.Product.BidHistory?.Any() == true)
     {
-        <ul>
-            @foreach (var bid in Model.Product.BidHistory.OrderByDescending(b => b.BidTime))
-            {
-                <li>
-                    Bidder ID: @bid.BidderId — Amount: @bid.BidAmount.ToString("C") — Time: @bid.BidTime.ToString("g")
-                </li>
-            }
-        </ul>
-    }
-    else
-    {
-        <p>ingen bud endnu.</p>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Bidder ID</th>
+                    <th>Bid Amount</th>
+                    <th>Bid Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bid in Model.Product.BidHistory.OrderByDescending(b => b.BidTime))
+                {
+                    <tr>
+                        <td>@bid.CustomerNumber</td>
+                        <td>@bid.BidAmount.ToString("C")</td>
+                        <td>@(bid.BidTime?.ToString("g") ?? "No bid time")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
 
     @if (User.Identity != null && User.Identity.IsAuthenticated)
@@ -58,13 +67,17 @@ else
         }
         @if (Model.SuccessMessage != null)
         {
+
             <div class="alert alert-success mt-2">@Model.SuccessMessage</div>
         }
     }
     else
     {
-        <p><strong>Log in for alt placere et bud.</strong></p>
+        <p>
+            <a class="btn btn-link mt-3" href="/auction/login">Log ind for at placere et bud</a>
+        </p>
     }
 
-    <a class="btn btn-link mt-3" href="/aution/Catalog">Tilbage til Kataloget</a>
+
+    <a class="btn btn-link mt-3" href="/auction/Catalog">Tilbage til Kataloget</a>
 }
