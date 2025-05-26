@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http;
 
 namespace MyApp.Namespace
 {
@@ -22,39 +25,46 @@ namespace MyApp.Namespace
 
         public async Task<IActionResult> OnPostAsync()
         {
+            if (!ModelState.IsValid)
+                return Page();
+
             var client = _clientFactory.CreateClient("gateway");
-            var endpoint = "/Auth/Userlogin";
+            var endpoint = "/Auth/UserLogin";
 
             try
             {
-                var response = await client.PostAsJsonAsync(endpoint, LoginModel);
-                Console.WriteLine($"endpoint for user/login {endpoint}");
-                Console.WriteLine($"Email: {LoginModel.EmailAddress}");
-                Console.WriteLine($"Password: {LoginModel.Password}");
-
-                var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Status: {response.StatusCode}, Raw Content: {content}");
-
-                if (response.IsSuccessStatusCode)
+                var response = await client.PostAsJsonAsync(endpoint, new
                 {
-                    if (bool.TryParse(content, out bool loginResult) && loginResult)
-                    {
-                        Console.WriteLine("Login successful (API returned true).");
-                        return Redirect("/auction/UserDashboard");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Login failed or invalid response.");
-                    }
+                    EmailAddress = LoginModel.EmailAddress,
+                    Password = LoginModel.Password
+                });
+
+                var json = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Raw response: {json}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    LoginFailed = true;
+                    return Page();
                 }
-                else
+
+                var root = JsonSerializer.Deserialize<LoginResponseWrapper>(json, new JsonSerializerOptions
                 {
-                    Console.WriteLine("HTTP response was not successful.");
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (root?.ReturnObject?.JwtToken is not null)
+                {
+                    // ✅ Store in session
+                    HttpContext.Session.SetString("userId", root.ReturnObject.Id);
+                    HttpContext.Session.SetString("jwtToken", root.ReturnObject.JwtToken);
+
+                    return Redirect("/auction/UserDashboard");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception: {ex.Message}");
+                Console.WriteLine($"Login exception: {ex.Message}");
             }
 
             LoginFailed = true;
@@ -63,26 +73,26 @@ namespace MyApp.Namespace
 
         public class LoginInputModel
         {
+            [Required(ErrorMessage = "Email is required.")]
             public string EmailAddress { get; set; }
+
+            [Required(ErrorMessage = "Password is required.")]
             public string Password { get; set; }
         }
 
-        public class RegisterInputModel
+        private class LoginResponseWrapper
         {
-            public string? FirstName { get; set; }
-            public string? LastName { get; set; }
-            public string? Address { get; set; }
-            public short PostalCode { get; set; }
-            public string? City { get; set; }
-            public string? PhoneNumber { get; set; }
+            [JsonPropertyName("returnObject")]
+            public LoginResponse ReturnObject { get; set; }
+        }
 
-            [Required]
-            public string? Email { get; set; }
+        private class LoginResponse
+        {
+            [JsonPropertyName("id")]
+            public string Id { get; set; }
 
-            [Required]
-            public string? Password { get; set; }
-
-            public int CustomerNumber { get; set; } = 0;
+            [JsonPropertyName("jwtToken")]
+            public string JwtToken { get; set; }
         }
     }
 }

@@ -2,94 +2,140 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
+using System.Text;
 using System.Text.Json;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace MyApp.Namespace
 {
-    public class UserModel : PageModel
+    public class UserDashboardModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;
 
-        public UserModel(IHttpClientFactory clientFactory)
+        public UserDashboardModel(IHttpClientFactory clientFactory)
         {
             _clientFactory = clientFactory;
         }
 
+        public UserModel? User { get; set; }
+        public List<ProductModel> ActiveBids { get; set; } = new();
+
         [BindProperty]
-        public UserDto User { get; set; } = new();
+        public UpdateUserModel UpdateForm { get; set; } = new();
 
-        public List<BidDto> ActiveBids { get; set; } = new();
-        public bool LoadError { get; set; }
-
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
-            string userId = "test-user-id"; // TODO: Replace with session or claims-based ID
+            var userId = HttpContext.Session.GetString("userId");
+            var jwtToken = HttpContext.Session.GetString("jwtToken");
+
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
+                return Redirect("/Login");
 
             var client = _clientFactory.CreateClient("gateway");
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
-            try
+            var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
+            if (!userResponse.IsSuccessStatusCode)
+                return Redirect("/Login");
+
+            User = await userResponse.Content.ReadFromJsonAsync<UserModel>();
+            if (User is null)
+                return Redirect("/Login");
+
+            UpdateForm = new UpdateUserModel
             {
-                var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
-                if (userResponse.IsSuccessStatusCode)
-                {
-                    User = await userResponse.Content.ReadFromJsonAsync<UserDto>();
-                }
-                else
-                {
-                    LoadError = true;
-                }
+                Id = User.Id,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                EmailAddress = User.EmailAddress
+            };
 
-                var bidsResponse = await client.GetAsync($"/Auction/GetBidsByUser/{userId}");
-                if (bidsResponse.IsSuccessStatusCode)
-                {
-                    ActiveBids = await bidsResponse.Content.ReadFromJsonAsync<List<BidDto>>();
-                }
-                else
-                {
-                    LoadError = true;
-                }
-            }
-            catch
-            {
-                LoadError = true;
-            }
-        }
-
-        public async Task<IActionResult> OnPostUpdateProfileAsync()
-        {
-            var client = _clientFactory.CreateClient("gateway");
-
-            var response = await client.PutAsJsonAsync($"/User/UpdateUser/{User.Id}", User);
-            if (!response.IsSuccessStatusCode)
-            {
-                ModelState.AddModelError("", "Failed to update profile.");
+            var productResponse = await client.GetAsync("/auction/GetAllProducts");
+            if (!productResponse.IsSuccessStatusCode)
                 return Page();
-            }
 
-            return RedirectToPage();
+            var products = await productResponse.Content.ReadFromJsonAsync<List<ProductModel>>();
+            if (products is null)
+                return Page();
+
+            ActiveBids = products
+                .Where(p => p.CurrentBidder == User.CustomerNumber)
+                .ToList();
+
+            return Page();
         }
 
-        public class UserDto
+        public async Task<IActionResult> OnPostUpdateAsync()
         {
-            public string Id { get; set; }
+            Console.WriteLine("✅ OnPostUpdateAsync called");
+
+            var client = _clientFactory.CreateClient("gateway");
+
+            // Get full user first
+            var getResponse = await client.GetAsync($"/User/GetUserById/{UpdateForm.Id}");
+            if (!getResponse.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError("", "Could not load user data.");
+                return await OnGetAsync();
+            }
+
+            var fullUser = await getResponse.Content.ReadFromJsonAsync<UserModel>();
+            if (fullUser == null)
+            {
+                ModelState.AddModelError("", "User not found.");
+                return await OnGetAsync();
+            }
+
+            fullUser.FirstName = UpdateForm.FirstName;
+            fullUser.LastName = UpdateForm.LastName;
+            fullUser.EmailAddress = UpdateForm.EmailAddress;
+
+            var json = JsonSerializer.Serialize(fullUser);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var putResponse = await client.PutAsync($"/User/UpdateUser/{fullUser.Id}", content);
+
+            if (putResponse.IsSuccessStatusCode)
+                return RedirectToPage();
+
+            ModelState.AddModelError("", "Update failed.");
+            return await OnGetAsync();
+        }
+
+        public class UpdateUserModel
+        {
+            public Guid Id { get; set; }
             public string? FirstName { get; set; }
             public string? LastName { get; set; }
-            public string? Address { get; set; }
-            public short PostalCode { get; set; }
-            public string? City { get; set; }
-            public string? PhoneNumber { get; set; }
-            public string? Email { get; set; }
+            public string? EmailAddress { get; set; }
         }
 
-        public class BidDto
+        public class UserModel
         {
-            public string AuctionTitle { get; set; }
-            public decimal YourBid { get; set; }
-            public decimal HighestBid { get; set; }
-            public string Status { get; set; }
-            public string TimeLeft { get; set; }
+            public Guid Id { get; set; }
+            public int CustomerNumber { get; set; }
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
+            public string? EmailAddress { get; set; }
+            public string? Password { get; set; }
+        }
+
+        public class ProductModel
+        {
+            public Guid Id { get; set; }
+            public string Name { get; set; }
+            public decimal? CurrentBid { get; set; }
+            public DateTime EndOfAuction { get; set; }
+            public int? CurrentBidder { get; set; }
+            public List<BidHistory>? BidHistory { get; set; }
+        }
+
+        public class BidHistory
+        {
+            public int BidderId { get; set; }
+            public decimal BidAmount { get; set; }
+            public DateTime BidTime { get; set; }
         }
     }
 }

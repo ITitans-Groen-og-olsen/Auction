@@ -1,36 +1,27 @@
 ﻿@page "/Login"
-@using MyApp.Namespace
 @model MyApp.Namespace.LoginPageModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Login";
 }
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <h2>Login</h2>
 
 <form method="post">
     @Html.AntiForgeryToken()
-    @* <div class="mb-3">
-        <label class="form-label">Login as</label>
-        <select asp-for="LoginModel.Role" class="form-select" id="roleSelector">
-            <option value="User">User</option>
-            <option value="Admin">Admin</option>
-        </select>
-    </div> *@
 
     <div class="mb-3">
         <label class="form-label" for="EmailAddress">Email</label>
-        <input name="LoginModel.EmailAddress" class="form-control" />
+        <input name="LoginModel.EmailAddress" id="EmailAddress" class="form-control" />
     </div>
+
     <div class="mb-3">
         <label class="form-label" for="Password">Password</label>
-        <input name="LoginModel.Password" type="password" class="form-control" />
+        <input name="LoginModel.Password" id="Password" type="password" class="form-control" />
     </div>
+
     <button type="submit" class="btn btn-primary">Login</button>
-
     <a class="btn btn-link" href="/auction/Register">Registrer ny bruger</a>
-
 </form>
 
 @if (Model.LoginFailed)

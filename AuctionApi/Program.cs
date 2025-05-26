@@ -4,7 +4,7 @@ using NLog;
 using NLog.Web;
 
 var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings()
-.GetCurrentClassLogger();
+    .GetCurrentClassLogger();
 
 try
 {
@@ -19,11 +19,14 @@ try
         client.BaseAddress = new Uri(gatewayUrl);
         client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
     });
-    Console.WriteLine($"Gateway set to{gatewayUrl}");
+    Console.WriteLine($"Gateway set to {gatewayUrl}");
 
     // Razor Pages + Controllers
     builder.Services.AddRazorPages();
     builder.Services.AddControllers();
+
+    // ✅ Add session support
+    builder.Services.AddSession(); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ADD THIS
 
     // MongoDB repository
     builder.Services.AddScoped<IAuctionDBRepository, AuctionMongoDBService>();
@@ -48,6 +51,8 @@ try
     // app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseRouting();
+
+    app.UseSession(); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ADD THIS
     app.UseAuthorization();
 
     app.MapControllers();
