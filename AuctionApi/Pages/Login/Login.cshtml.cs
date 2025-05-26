@@ -59,7 +59,7 @@ namespace MyApp.Namespace
                     HttpContext.Session.SetString("userId", root.ReturnObject.Id);
                     HttpContext.Session.SetString("jwtToken", root.ReturnObject.JwtToken);
 
-                    return Redirect("/auction/UserDashboard");
+                    return Redirect("/auction/User");
                 }
             }
             catch (Exception ex)

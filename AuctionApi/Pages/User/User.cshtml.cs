@@ -8,16 +8,18 @@ using System.Text.Json;
 
 namespace MyApp.Namespace
 {
-    public class UserDashboardModel : PageModel
+    public class UserModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;
+        private readonly ILogger<UserModel> _logger;
 
-        public UserDashboardModel(IHttpClientFactory clientFactory)
+        public UserModel(IHttpClientFactory clientFactory, ILogger<UserModel> logger)
         {
             _clientFactory = clientFactory;
+            _logger = logger;
         }
 
-        public UserModel? User { get; set; }
+        public UserData? User { get; set; }
         public List<ProductModel> ActiveBids { get; set; } = new();
 
         [BindProperty]
@@ -36,10 +38,10 @@ namespace MyApp.Namespace
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
             var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
-            if (!userResponse.IsSuccessStatusCode)
+            if (!userResponse.IsSuccessStatusCode || userResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return Redirect("/Login");
 
-            User = await userResponse.Content.ReadFromJsonAsync<UserModel>();
+            User = await userResponse.Content.ReadFromJsonAsync<UserData>();
             if (User is null)
                 return Redirect("/Login");
 
@@ -66,39 +68,51 @@ namespace MyApp.Namespace
             return Page();
         }
 
-        public async Task<IActionResult> OnPostUpdateAsync()
+        public async Task<IActionResult> OnPostAsync()
         {
-            Console.WriteLine("✅ OnPostUpdateAsync called");
+            _logger.LogInformation("🛠️ OnPostAsync triggered with form: {@UpdateForm}", UpdateForm);
 
             var client = _clientFactory.CreateClient("gateway");
 
-            // Get full user first
+            // Get existing user from API
             var getResponse = await client.GetAsync($"/User/GetUserById/{UpdateForm.Id}");
-            if (!getResponse.IsSuccessStatusCode)
+            if (!getResponse.IsSuccessStatusCode || getResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
                 ModelState.AddModelError("", "Could not load user data.");
                 return await OnGetAsync();
             }
 
-            var fullUser = await getResponse.Content.ReadFromJsonAsync<UserModel>();
+            var fullUser = await getResponse.Content.ReadFromJsonAsync<UserData>();
             if (fullUser == null)
             {
                 ModelState.AddModelError("", "User not found.");
                 return await OnGetAsync();
             }
 
+            _logger.LogInformation("👤 Existing user from API: {@fullUser}", fullUser);
+
+            // Update fields from form
             fullUser.FirstName = UpdateForm.FirstName;
             fullUser.LastName = UpdateForm.LastName;
             fullUser.EmailAddress = UpdateForm.EmailAddress;
 
-            var json = JsonSerializer.Serialize(fullUser);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            fullUser.Password ??= ""; // fallback to avoid breaking update
+            fullUser.CustomerNumber = fullUser.CustomerNumber;
 
+            // Send as JSON
+            var json = JsonSerializer.Serialize(fullUser);
+            _logger.LogInformation("📦 Sending JSON to User API: {json}", json);
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var putResponse = await client.PutAsync($"/User/UpdateUser/{fullUser.Id}", content);
 
             if (putResponse.IsSuccessStatusCode)
-                return RedirectToPage();
+            {
+                _logger.LogInformation("✅ Update successful for user {UserId}", fullUser.Id);
+                return Redirect("/auction/User");
+            }
 
+            _logger.LogWarning("❌ Update failed for user {UserId}", fullUser.Id);
             ModelState.AddModelError("", "Update failed.");
             return await OnGetAsync();
         }
@@ -111,7 +125,7 @@ namespace MyApp.Namespace
             public string? EmailAddress { get; set; }
         }
 
-        public class UserModel
+        public class UserData
         {
             public Guid Id { get; set; }
             public int CustomerNumber { get; set; }
