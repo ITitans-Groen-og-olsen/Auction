@@ -49,35 +49,36 @@ else
         </table>
     }
 
-    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    @if (Model.LoggedInUser != null)
+{
+    <p>Du er logget ind som: @Model.LoggedInUser.FirstName @Model.LoggedInUser.LastName (Kunde nr. @Model.LoggedInUser.CustomerNumber)</p>
+
+    <h4>Placer et Bud</h4>
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <div class="mb-3">
+            <label for="bidAmount" class="form-label">Dit Bud</label>
+            <input type="number" step="0.01" name="BidAmount" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Placer Bud</button>
+    </form>
+
+    @if (Model.ErrorMessage != null)
     {
-        <h4>Placer et Bud</h4>
-
-        <form method="post">
-            <div class="mb-3">
-                <label for="bidAmount" class="form-label">Dit Bud</label>
-                <input type="number" step="0.01" name="BidAmount" class="form-control" required />
-            </div>
-            <button type="submit" class="btn btn-primary">Placer Bud</button>
-        </form>
-
-        @if (Model.ErrorMessage != null)
-        {
-            <div class="alert alert-danger mt-2">@Model.ErrorMessage</div>
-        }
-        @if (Model.SuccessMessage != null)
-        {
-
-            <div class="alert alert-success mt-2">@Model.SuccessMessage</div>
-        }
+        <div class="alert alert-danger mt-2">@Model.ErrorMessage</div>
     }
-    else
+    @if (Model.SuccessMessage != null)
     {
-        <p>
-            <a class="btn btn-link mt-3" href="/auction/login">Log ind for at placere et bud</a>
-        </p>
+        <div class="alert alert-success mt-2">@Model.SuccessMessage</div>
     }
-
+}
+else
+{
+    <p>
+        <a class="btn btn-link mt-3" href="/auction/login">Log ind for at placere et bud</a>
+    </p>
+}
 
     <a class="btn btn-link mt-3" href="/auction/Catalog">Tilbage til Kataloget</a>
 }
