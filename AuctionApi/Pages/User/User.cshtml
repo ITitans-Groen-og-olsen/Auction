@@ -7,6 +7,17 @@
 
 <h2>Velkommen, @Model.User?.FirstName @Model.User?.LastName</h2>
 
+<!-- Top action buttons -->
+<div class="mt-3 mb-4 d-flex justify-content-start gap-2">
+    <a href="/auction/AddProduct" class="btn btn-outline-primary">
+        Opret nyt salg
+    </a>
+
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">
+        Rediger Profil
+    </button>
+</div>
+
 <h3>Dine aktive bud</h3>
 
 <table class="table table-striped">
@@ -40,10 +51,25 @@
     </tbody>
 </table>
 
-<!-- Modal Trigger -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">
-    Rediger Profil
-</button>
+<h3>Dine salgsforslag</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Produktnavn</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var product in Model.OwnProducts)
+    {
+        <tr>
+            <td>@product.Name</td>
+            <td>@(product.IsApproved ? "Godkendt" : "Afventer godkendelse")</td>
+        </tr>
+    }
+    </tbody>
+</table>
 
 <!-- Modal -->
 <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
@@ -51,7 +77,6 @@
         <div class="modal-content">
             <form method="post" asp-page="/User/User">
                 @Html.AntiForgeryToken()
-
                 <div class="modal-body">
                     <div class="mb-3">
                         <label asp-for="UpdateForm.FirstName" class="form-label">Fornavn</label>
@@ -65,9 +90,24 @@
                         <label asp-for="UpdateForm.EmailAddress" class="form-label">Email</label>
                         <input name="UpdateForm.EmailAddress" class="form-control" value="@Model.UpdateForm.EmailAddress" />
                     </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.Address" class="form-label">Adresse</label>
+                        <input name="UpdateForm.Address" class="form-control" value="@Model.UpdateForm.Address" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.PostalCode" class="form-label">Postnummer</label>
+                        <input name="UpdateForm.PostalCode" class="form-control" type="number" value="@Model.UpdateForm.PostalCode" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.City" class="form-label">By</label>
+                        <input name="UpdateForm.City" class="form-control" value="@Model.UpdateForm.City" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.PhoneNumber" class="form-label">Telefonnummer</label>
+                        <input name="UpdateForm.PhoneNumber" class="form-control" value="@Model.UpdateForm.PhoneNumber" />
+                    </div>
                     <input type="hidden" name="UpdateForm.Id" value="@Model.UpdateForm.Id" />
                 </div>
-
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-success">Gem ændringer</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Luk</button>
@@ -76,7 +116,6 @@
         </div>
     </div>
 </div>
-
 
 @if (ModelState.ErrorCount > 0)
 {

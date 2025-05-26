@@ -21,6 +21,7 @@ namespace MyApp.Namespace
 
         public UserData? User { get; set; }
         public List<ProductModel> ActiveBids { get; set; } = new();
+        public List<ProductModel> OwnProducts { get; set; } = new();
 
         [BindProperty]
         public UpdateUserModel UpdateForm { get; set; } = new();
@@ -50,7 +51,11 @@ namespace MyApp.Namespace
                 Id = User.Id,
                 FirstName = User.FirstName,
                 LastName = User.LastName,
-                EmailAddress = User.EmailAddress
+                EmailAddress = User.EmailAddress,
+                Address = User.Address,
+                PostalCode = User.PostalCode,
+                City = User.City,
+                PhoneNumber = User.PhoneNumber
             };
 
             var productResponse = await client.GetAsync("/auction/GetAllProducts");
@@ -62,7 +67,12 @@ namespace MyApp.Namespace
                 return Page();
 
             ActiveBids = products
-                .Where(p => p.CurrentBidder == User.CustomerNumber)
+                .Where(p => p.BidHistory?.Any(b => b.BidderId == User.CustomerNumber) == true)
+                .ToList();
+
+            OwnProducts = products
+                .Where(p => p.BidHistory?.Any(b => b.BidderId == User.CustomerNumber) == false &&
+                            (p.CurrentBidder == null || p.CurrentBidder != User.CustomerNumber))
                 .ToList();
 
             return Page();
@@ -74,9 +84,8 @@ namespace MyApp.Namespace
 
             var client = _clientFactory.CreateClient("gateway");
 
-            // Get existing user from API
             var getResponse = await client.GetAsync($"/User/GetUserById/{UpdateForm.Id}");
-            if (!getResponse.IsSuccessStatusCode || getResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
+            if (!getResponse.IsSuccessStatusCode)
             {
                 ModelState.AddModelError("", "Could not load user data.");
                 return await OnGetAsync();
@@ -89,30 +98,26 @@ namespace MyApp.Namespace
                 return await OnGetAsync();
             }
 
-            _logger.LogInformation("👤 Existing user from API: {@fullUser}", fullUser);
-
-            // Update fields from form
             fullUser.FirstName = UpdateForm.FirstName;
             fullUser.LastName = UpdateForm.LastName;
             fullUser.EmailAddress = UpdateForm.EmailAddress;
-
-            fullUser.Password ??= ""; // fallback to avoid breaking update
+            fullUser.Address = UpdateForm.Address;
+            fullUser.PostalCode = UpdateForm.PostalCode;
+            fullUser.City = UpdateForm.City;
+            fullUser.PhoneNumber = UpdateForm.PhoneNumber;
+            fullUser.Password ??= "";
             fullUser.CustomerNumber = fullUser.CustomerNumber;
 
-            // Send as JSON
             var json = JsonSerializer.Serialize(fullUser);
-            _logger.LogInformation("📦 Sending JSON to User API: {json}", json);
-
             var content = new StringContent(json, Encoding.UTF8, "application/json");
+
             var putResponse = await client.PutAsync($"/User/UpdateUser/{fullUser.Id}", content);
 
             if (putResponse.IsSuccessStatusCode)
             {
-                _logger.LogInformation("✅ Update successful for user {UserId}", fullUser.Id);
                 return Redirect("/auction/User");
             }
 
-            _logger.LogWarning("❌ Update failed for user {UserId}", fullUser.Id);
             ModelState.AddModelError("", "Update failed.");
             return await OnGetAsync();
         }
@@ -123,6 +128,10 @@ namespace MyApp.Namespace
             public string? FirstName { get; set; }
             public string? LastName { get; set; }
             public string? EmailAddress { get; set; }
+            public string? Address { get; set; }
+            public short PostalCode { get; set; }
+            public string? City { get; set; }
+            public string? PhoneNumber { get; set; }
         }
 
         public class UserData
@@ -133,6 +142,10 @@ namespace MyApp.Namespace
             public string? LastName { get; set; }
             public string? EmailAddress { get; set; }
             public string? Password { get; set; }
+            public string? Address { get; set; }
+            public short PostalCode { get; set; }
+            public string? City { get; set; }
+            public string? PhoneNumber { get; set; }
         }
 
         public class ProductModel
@@ -142,6 +155,7 @@ namespace MyApp.Namespace
             public decimal? CurrentBid { get; set; }
             public DateTime EndOfAuction { get; set; }
             public int? CurrentBidder { get; set; }
+            public bool IsApproved { get; set; }
             public List<BidHistory>? BidHistory { get; set; }
         }
 

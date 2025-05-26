@@ -67,7 +67,7 @@ public class AddProductModel : PageModel
             if (response.IsSuccessStatusCode)
             {
                 Submitted = true;
-                return Redirect("/auction/Admin"); // Or wherever you want to go
+                return Redirect("/auction/User"); // Or wherever you want to go
             }
         }
         catch (Exception ex)
