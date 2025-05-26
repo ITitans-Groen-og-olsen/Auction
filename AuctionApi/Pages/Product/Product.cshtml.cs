@@ -12,6 +12,9 @@ public class ProductModel : PageModel
         _httpClientFactory = httpClientFactory;
     }
 
+    public UserModel? LoggedInUser { get; set; }
+
+
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
 
@@ -24,95 +27,117 @@ public class ProductModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        Console.WriteLine("🚀 Entered OnGetAsync");
+        var userId = HttpContext.Session.GetString("userId");
+        var jwtToken = HttpContext.Session.GetString("jwtToken");
 
-        try
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
         {
-            var client = _httpClientFactory.CreateClient("gateway");
-
-    
-            Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
-
-            if (Product == null)
-            {
-                Console.WriteLine($"[OnGetAsync] Product with ID {Id} not found.");
-                return NotFound();
-            }
-
-            Console.WriteLine($"[OnGetAsync] Successfully retrieved product: {Product.Name}");
-            return Page();
+            return Redirect("/Login");
         }
-        catch (Exception ex)
+
+        var client = _httpClientFactory.CreateClient("gateway");
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+
+        // Fetch user
+        var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
+        if (userResponse.IsSuccessStatusCode)
         {
-            Console.WriteLine($"❌ [OnGetAsync] Exception occurred: {ex.Message}");
-            return StatusCode(500);
+            LoggedInUser = await userResponse.Content.ReadFromJsonAsync<UserModel>();
         }
+
+        // Fetch product
+        Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
+
+        if (Product == null)
+        {
+            return NotFound();
+        }
+
+        return Page();
     }
+
 
     public async Task<IActionResult> OnPostAsync()
     {
-        Console.WriteLine("🚀 Entered OnPostAsync");
+        var userId = HttpContext.Session.GetString("userId");
+        var jwtToken = HttpContext.Session.GetString("jwtToken");
 
-        try
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
         {
-            Console.WriteLine($"[OnPostAsync] Creating client for Product ID: {Id}");
-            var client = _httpClientFactory.CreateClient("gateway");
+            ErrorMessage = "You must be logged in to place a bid.";
+            return Redirect("/Login");
+        }
 
-            Console.WriteLine($"[OnPostAsync] Requesting Auction/GetProductById/{Id}");
-            Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
+        var client = _httpClientFactory.CreateClient("gateway");
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
-            if (Product == null)
-            {
-                Console.WriteLine($"[OnPostAsync] Product with ID {Id} not found.");
-                return NotFound();
-            }
-
-            var minBid = Product.currentbid ?? Product.StartPrice;
-            Console.WriteLine($"[OnPostAsync] Current bid: {Product.currentbid}, Start price: {Product.StartPrice}, Submitted bid: {BidAmount}");
-
-            if (BidAmount <= minBid)
-            {
-                ErrorMessage = $"Your bid must be higher than {minBid:C}.";
-                Console.WriteLine($"[OnPostAsync] Bid too low.");
-                return Page();
-            }
-
-            if (!User.Identity?.IsAuthenticated ?? true)
-            {
-                ErrorMessage = "You must be logged in to place a bid.";
-                Console.WriteLine($"[OnPostAsync] User not authenticated.");
-                return Page();
-            }
-
-            int simulatedUserId = 1;
-
-            var bid = new BidHistory
-            {
-                CustomerNumber = simulatedUserId,
-                BidAmount = BidAmount,
-                BidTime = DateTime.UtcNow
-            };
-
-            Console.WriteLine($"[OnPostAsync] Sending bid: {bid.BidAmount} by user {bid.CustomerNumber}");
-            var response = await client.PostAsJsonAsync($"Auction/{Id}/bids", bid);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                ErrorMessage = "Failed to place bid.";
-                Console.WriteLine($"[OnPostAsync] Failed to post bid. StatusCode: {response.StatusCode}");
-                return Page();
-            }
-
-            SuccessMessage = "Bid placed successfully!";
-            Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
-            Console.WriteLine($"[OnPostAsync] Bid placed successfully.");
-
+        // Fetch user
+        var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
+        if (!userResponse.IsSuccessStatusCode)
+        {
+            ErrorMessage = "Could not verify user.";
             return Page();
         }
-        catch (Exception ex)
+
+        LoggedInUser = await userResponse.Content.ReadFromJsonAsync<UserModel>();
+        if (LoggedInUser is null)
         {
-            Console.WriteLine($"❌ [OnPostAsync] Exception occurred: {ex.Message}");
-            return StatusCode(500);
+            ErrorMessage = "Could not load user info.";
+            return Page();
         }
+
+        // Fetch product
+        Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
+        if (Product == null)
+        {
+            return NotFound();
+        }
+
+        var minBid = Product.currentbid ?? Product.StartPrice;
+        if (BidAmount <= minBid)
+        {
+            ErrorMessage = $"Your bid must be higher than {minBid:C}.";
+            return Page();
+        }
+
+        var bid = new BidHistory
+        {
+            CustomerNumber = LoggedInUser.CustomerNumber,
+            BidAmount = BidAmount,
+            BidTime = DateTime.UtcNow
+        };
+
+        var endpoint = $"Auction/bid/{Id}";      
+        Console.WriteLine($"This is the base adress {client.BaseAddress!}");
+        Console.WriteLine($"Tis is the bid value {bid.BidAmount}");
+         
+
+        var response = await client.PostAsJsonAsync($"endpoint", bid);
+
+        Console.WriteLine($"This is the endpoint before: {endpoint}");
+        Console.WriteLine($"This is the base adress {client.BaseAddress!}");
+        Console.WriteLine($"This is the bid value {bid.BidAmount}");
+
+
+        if (!response.IsSuccessStatusCode)
+        {
+            ErrorMessage = "Failed to place bid.";
+            return Page();
+        }
+
+        SuccessMessage = "Bid placed successfully!";
+        Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
+        return Page();
     }
+}
+
+public class UserModel
+{
+    public Guid Id { get; set; }
+    public int CustomerNumber { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? EmailAddress { get; set; }
 }
