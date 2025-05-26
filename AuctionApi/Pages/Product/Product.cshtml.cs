@@ -28,10 +28,9 @@ public class ProductModel : PageModel
 
         try
         {
-            Console.WriteLine($"[OnGetAsync] Creating client for Product ID: {Id}");
             var client = _httpClientFactory.CreateClient("gateway");
 
-            Console.WriteLine($"[OnGetAsync] Requesting Auction/GetProductById/{Id}");
+    
             Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
 
             if (Product == null)
@@ -89,12 +88,12 @@ public class ProductModel : PageModel
 
             var bid = new BidHistory
             {
-                BidderId = simulatedUserId,
+                CustomerNumber = simulatedUserId,
                 BidAmount = BidAmount,
                 BidTime = DateTime.UtcNow
             };
 
-            Console.WriteLine($"[OnPostAsync] Sending bid: {bid.BidAmount} by user {bid.BidderId}");
+            Console.WriteLine($"[OnPostAsync] Sending bid: {bid.BidAmount} by user {bid.CustomerNumber}");
             var response = await client.PostAsJsonAsync($"Auction/{Id}/bids", bid);
 
             if (!response.IsSuccessStatusCode)

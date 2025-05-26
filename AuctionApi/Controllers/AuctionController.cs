@@ -66,6 +66,10 @@ public class AuctionController : ControllerBase
         _logger.LogInformation("AddProduct called with Title: {Title}", product.Name);
         try
         {
+            product.IsApproved = false;
+            product.EndOfAuction = DateTime.Now.AddDays(30);
+            product.BidHistory = new List<BidHistory>();
+
             var created = await _productRepository.CreateProductAsync(product);
             _logger.LogInformation("Product created with ID: {ProductId}", created.Id);
             return created;
@@ -118,35 +122,67 @@ public class AuctionController : ControllerBase
         }
     }
 
-    [HttpPost("{productId}/bids")]
-    public async Task<IActionResult> PlaceBid(string productId, [FromBody] BidHistory bid)
+    [HttpPost("bid/{productId}")]
+public async Task<IActionResult> PlaceBid(Guid productId, [FromBody] BidHistory bid)
+{
+    _logger.LogInformation("PlaceBid called for Product ID: {ProductId} with Bid Amount: {BidAmount}", productId, bid?.BidAmount);
+
+    if (bid == null || bid.BidAmount <= 0)
     {
-        _logger.LogInformation("PlaceBid called for Product ID: {ProductId} with Bid Amount: {BidAmount}", productId, bid?.BidAmount);
-
-        if (bid == null || bid.BidAmount <= 0)
-        {
-            _logger.LogWarning("Invalid bid submitted for Product ID: {ProductId}", productId);
-            return BadRequest("Invalid bid.");
-        }
-
-        try
-        {
-            var updatedProduct = await _productRepository.AddBidAsync(productId, bid);
-            if (updatedProduct == null)
-            {
-                _logger.LogWarning("Product not found for placing bid: {ProductId}", productId);
-                return NotFound();
-            }
-
-            _logger.LogInformation("Bid placed successfully on Product ID: {ProductId}", productId);
-            return Ok(updatedProduct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in PlaceBid for Product ID: {ProductId}", productId);
-            throw;
-        }
+        _logger.LogWarning("Invalid bid submitted for Product ID: {ProductId}", productId);
+        return BadRequest("Invalid bid. Bid amount must be greater than 0.");
     }
+
+    try
+    {
+        // Fetch the product by Guid
+        var product = await _productRepository.GetProductByIdAsync(productId);
+        if (product == null)
+        {
+            _logger.LogWarning("Product not found: {ProductId}", productId);
+            return NotFound($"Product with ID {productId} not found.");
+        }
+
+        // Determine the highest existing bid safely
+        decimal highestBid = 0;
+
+        if (product.BidHistory != null && product.BidHistory.Any())
+        {
+            highestBid = product.BidHistory.Max(b => b.BidAmount);
+        }
+
+        // Minimum allowed bid must be at least the start price
+        decimal minimumAllowedBid = Math.Max(highestBid, product.StartPrice);
+
+        if (bid.BidAmount <= minimumAllowedBid)
+        {
+            _logger.LogWarning("Bid too low for Product ID: {ProductId}. Bid: {BidAmount}, Min Allowed: {MinAllowed}",
+                productId, bid.BidAmount, minimumAllowedBid);
+            return BadRequest($"Your bid must be at least above {minimumAllowedBid:C}.");
+        }
+
+        // Set bid time to now
+        bid.BidTime = DateTime.Now;
+
+        // Add the bid
+        var updatedProduct = await _productRepository.AddBidAsync(productId, bid);
+        if (updatedProduct == null)
+        {
+            _logger.LogWarning("Failed to add bid. Product not found: {ProductId}", productId);
+            return NotFound($"Product with ID {productId} not found.");
+        }
+
+        _logger.LogInformation("Bid placed successfully on Product ID: {ProductId}", productId);
+        return Ok(updatedProduct);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error placing bid for Product ID: {ProductId}", productId);
+        return StatusCode(500, "An error occurred while placing the bid.");
+    }
+}
+
+
 
     [HttpGet("version")]
     public async Task<Dictionary<string, string>> GetVersion()

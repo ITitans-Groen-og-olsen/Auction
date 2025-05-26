@@ -67,13 +67,13 @@ namespace Services
             var result = await _products.DeleteOneAsync(p => p.Id.ToString() == id);
             return result.DeletedCount > 0;
         }
-        public async Task<Product> AddBidAsync(string productId, BidHistory bid)
+        public async Task<Product> AddBidAsync(Guid productId, BidHistory bid)
         {
-            var filter = Builders<Product>.Filter.Eq(p => p.Id, Guid.Parse(productId));
+            var filter = Builders<Product>.Filter.Eq(p => p.Id,productId);
             var update = Builders<Product>.Update
                 .Push(p => p.BidHistory, bid)
                 .Set(p => p.currentbid, bid.BidAmount)
-                .Set(p => p.CurrentBidder, bid.BidderId);
+                .Set(p => p.CurrentBidder, bid.CustomerNumber);
 
             var result = await _products.FindOneAndUpdateAsync(filter, update, new FindOneAndUpdateOptions<Product>
             {
