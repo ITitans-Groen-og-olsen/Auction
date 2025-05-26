@@ -114,7 +114,7 @@ public class ProductModel : PageModel
         Console.WriteLine($"Tis is the bid value {bid.BidAmount}");
          
 
-        var response = await client.PostAsJsonAsync($"endpoint", bid);
+        var response = await client.PostAsJsonAsync(endpoint, bid);
 
         Console.WriteLine($"This is the endpoint before: {endpoint}");
         Console.WriteLine($"This is the base adress {client.BaseAddress!}");

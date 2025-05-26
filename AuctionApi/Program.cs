@@ -26,7 +26,8 @@ try
     builder.Services.AddControllers();
 
     // ✅ Add session support
-    builder.Services.AddSession(); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ADD THIS
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddSession(); 
 
     // MongoDB repository
     builder.Services.AddScoped<IAuctionDBRepository, AuctionMongoDBService>();
@@ -52,7 +53,7 @@ try
     app.UseStaticFiles();
     app.UseRouting();
 
-    app.UseSession(); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ADD THIS
+    app.UseSession(); 
     app.UseAuthorization();
 
     app.MapControllers();
