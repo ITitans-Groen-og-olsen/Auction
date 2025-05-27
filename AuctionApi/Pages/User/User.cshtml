@@ -77,6 +77,8 @@
         <div class="modal-content">
             <form method="post" asp-page="/User/User">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="UpdateForm.Id" value="@Model.UpdateForm.Id" />
+
                 <div class="modal-body">
                     <div class="mb-3">
                         <label asp-for="UpdateForm.FirstName" class="form-label">Fornavn</label>
@@ -106,7 +108,6 @@
                         <label asp-for="UpdateForm.PhoneNumber" class="form-label">Telefonnummer</label>
                         <input name="UpdateForm.PhoneNumber" class="form-control" value="@Model.UpdateForm.PhoneNumber" />
                     </div>
-                    <input type="hidden" name="UpdateForm.Id" value="@Model.UpdateForm.Id" />
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-success">Gem ændringer</button>
@@ -126,4 +127,3 @@
         }
     </div>
 }
-

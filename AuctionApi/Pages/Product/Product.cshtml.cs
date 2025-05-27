@@ -26,15 +26,12 @@ public class ProductModel : PageModel
     public string? SuccessMessage { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
+{
+    var userId = HttpContext.Session.GetString("userId");
+    var jwtToken = HttpContext.Session.GetString("jwtToken");
+
+    if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(jwtToken))
     {
-        var userId = HttpContext.Session.GetString("userId");
-        var jwtToken = HttpContext.Session.GetString("jwtToken");
-
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
-        {
-            return Redirect("/Login");
-        }
-
         var client = _httpClientFactory.CreateClient("gateway");
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
@@ -45,17 +42,20 @@ public class ProductModel : PageModel
         {
             LoggedInUser = await userResponse.Content.ReadFromJsonAsync<UserModel>();
         }
-
-        // Fetch product
-        Product = await client.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
-
-        if (Product == null)
-        {
-            return NotFound();
-        }
-
-        return Page();
     }
+
+    // You always want to load the product
+    var anonymousClient = _httpClientFactory.CreateClient("gateway");
+    Product = await anonymousClient.GetFromJsonAsync<Product>($"Auction/GetProductById/{Id}");
+
+    if (Product == null)
+    {
+        return NotFound();
+    }
+
+    return Page();
+}
+
 
 
     public async Task<IActionResult> OnPostAsync()

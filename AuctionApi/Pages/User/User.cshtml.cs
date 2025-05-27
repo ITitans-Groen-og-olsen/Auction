@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace MyApp.Namespace
 {
@@ -39,10 +39,12 @@ namespace MyApp.Namespace
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
             var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
+
             if (!userResponse.IsSuccessStatusCode || userResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return Redirect("/Login");
 
             User = await userResponse.Content.ReadFromJsonAsync<UserData>();
+
             if (User is null)
                 return Redirect("/Login");
 
@@ -58,7 +60,9 @@ namespace MyApp.Namespace
                 PhoneNumber = User.PhoneNumber
             };
 
-            var productResponse = await client.GetAsync("/auction/GetAllProducts");
+
+            var productResponse = await client.GetAsync("/Auction/GetAllProducts");
+
             if (!productResponse.IsSuccessStatusCode)
                 return Page();
 
@@ -85,13 +89,15 @@ namespace MyApp.Namespace
             var client = _clientFactory.CreateClient("gateway");
 
             var getResponse = await client.GetAsync($"/User/GetUserById/{UpdateForm.Id}");
-            if (!getResponse.IsSuccessStatusCode)
+
+            if (!getResponse.IsSuccessStatusCode || getResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
                 ModelState.AddModelError("", "Could not load user data.");
                 return await OnGetAsync();
             }
 
             var fullUser = await getResponse.Content.ReadFromJsonAsync<UserData>();
+
             if (fullUser == null)
             {
                 ModelState.AddModelError("", "User not found.");
@@ -114,9 +120,7 @@ namespace MyApp.Namespace
             var putResponse = await client.PutAsync($"/User/UpdateUser/{fullUser.Id}", content);
 
             if (putResponse.IsSuccessStatusCode)
-            {
                 return Redirect("/auction/User");
-            }
 
             ModelState.AddModelError("", "Update failed.");
             return await OnGetAsync();

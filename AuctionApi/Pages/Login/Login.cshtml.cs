@@ -24,89 +24,84 @@ namespace MyApp.Namespace
         public bool LoginFailed { get; set; }
 
         public async Task<IActionResult> OnPostAsync()
+{
+    if (!ModelState.IsValid)
+        return Page();
+
+    var client = _clientFactory.CreateClient("gateway");
+
+    // Clear previous session before setting new login state
+    HttpContext.Session.Clear();
+
+    try
+    {
+        if (LoginModel.IsAdmin)
         {
-            if (!ModelState.IsValid)
+            var response = await client.PostAsJsonAsync("/Auth/AdminLogin", new
+            {
+                EmailAddress = LoginModel.EmailAddress,
+                Password = LoginModel.Password
+            });
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode || string.IsNullOrWhiteSpace(json))
+            {
+                LoginFailed = true;
                 return Page();
-
-            var client = _clientFactory.CreateClient("gateway");
-
-            try
-            {
-                if (LoginModel.IsAdmin)
-                {
-                    // Admin login path
-                    var response = await client.PostAsJsonAsync("/Auth/AdminLogin", new
-                    {
-                        EmailAddress = LoginModel.EmailAddress,
-                        Password = LoginModel.Password
-                    });
-
-                    var json = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Admin login raw response: {json}");
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        LoginFailed = true;
-                        return Page();
-                    }
-
-                    var adminToken = JsonSerializer.Deserialize<AdminLoginResponse>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    if (!string.IsNullOrEmpty(adminToken?.Token))
-                    {
-                        HttpContext.Session.SetString("jwtToken", adminToken.Token);
-                        HttpContext.Session.SetString("role", "Admin");
-                        return Redirect("/auction/Admin");
-                    }
-                }
-                else
-                {
-                    // Regular user login path
-                    var response = await client.PostAsJsonAsync("/Auth/UserLogin", new
-                    {
-                        EmailAddress = LoginModel.EmailAddress,
-                        Password = LoginModel.Password
-                    });
-
-                    var json = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"User login raw response: {json}");
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        LoginFailed = true;
-                        return Page();
-                    }
-
-                    var root = JsonSerializer.Deserialize<LoginResponseWrapper>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    if (!string.IsNullOrEmpty(root?.ReturnObject?.JwtToken))
-                    {
-                        HttpContext.Session.SetString("userId", root.ReturnObject.Id);
-                        HttpContext.Session.SetString("jwtToken", root.ReturnObject.JwtToken);
-                        HttpContext.Session.SetString("role", "User");
-
-                        return Redirect("/auction/User");
-
-                    }
-  
-
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Login exception: {ex.Message}");
             }
 
-            LoginFailed = true;
-            return Page();
+            var adminToken = JsonSerializer.Deserialize<AdminLoginResponse>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (!string.IsNullOrEmpty(adminToken?.Token))
+            {
+                HttpContext.Session.SetString("jwtToken", adminToken.Token);
+                HttpContext.Session.SetString("role", "Admin");
+                return Redirect("/auction/Admin");
+            }
         }
+        else
+        {
+            var response = await client.PostAsJsonAsync("/Auth/UserLogin", new
+            {
+                EmailAddress = LoginModel.EmailAddress,
+                Password = LoginModel.Password
+            });
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode || string.IsNullOrWhiteSpace(json))
+            {
+                LoginFailed = true;
+                return Page();
+            }
+
+            var root = JsonSerializer.Deserialize<LoginResponseWrapper>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (!string.IsNullOrEmpty(root?.ReturnObject?.JwtToken))
+            {
+                HttpContext.Session.SetString("userId", root.ReturnObject.Id);
+                HttpContext.Session.SetString("jwtToken", root.ReturnObject.JwtToken);
+                HttpContext.Session.SetString("role", "User");
+
+                return Redirect("/auction/User");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Login exception: {ex.Message}");
+    }
+
+    LoginFailed = true;
+    return Page();
+}
 
         public class LoginInputModel
         {
