@@ -18,6 +18,8 @@ public class Product
     public int? CurrentBidder { get; set; }
     public List<BidHistory>? BidHistory { get; set; } = new();
 
-        public bool IsApproved { get; set; } = false;
+    public bool IsApproved { get; set; } = false;
+        
+    public int CustomerNumber { get; set; }
 
 }
