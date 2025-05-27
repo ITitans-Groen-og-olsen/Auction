@@ -27,62 +27,62 @@ namespace MyApp.Namespace
         public UpdateUserModel UpdateForm { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
-{
-    var userId = HttpContext.Session.GetString("userId");
-    var jwtToken = HttpContext.Session.GetString("jwtToken");
+        {
+            var userId = HttpContext.Session.GetString("userId");
+            var jwtToken = HttpContext.Session.GetString("jwtToken");
 
-    if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
-        return Redirect("/Login");
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jwtToken))
+                return Redirect("/Login");
 
-    var client = _clientFactory.CreateClient("gateway");
-    client.DefaultRequestHeaders.Authorization =
-        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+            var client = _clientFactory.CreateClient("gateway");
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
 
-    var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
+            var userResponse = await client.GetAsync($"/User/GetUserById/{userId}");
 
-    if (!userResponse.IsSuccessStatusCode || userResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
-        return Redirect("/Login");
+            if (!userResponse.IsSuccessStatusCode || userResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return Redirect("/Login");
 
-    User = await userResponse.Content.ReadFromJsonAsync<UserData>();
+            User = await userResponse.Content.ReadFromJsonAsync<UserData>();
 
-    if (User is null)
-        return Redirect("/Login");
+            if (User is null)
+                return Redirect("/Login");
 
-    UpdateForm = new UpdateUserModel
-    {
-        Id = User.Id,
-        FirstName = User.FirstName,
-        LastName = User.LastName,
-        EmailAddress = User.EmailAddress,
-        Address = User.Address,
-        PostalCode = User.PostalCode,
-        City = User.City,
-        PhoneNumber = User.PhoneNumber
-    };
+            UpdateForm = new UpdateUserModel
+            {
+                Id = User.Id,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                EmailAddress = User.EmailAddress,
+                Address = User.Address,
+                PostalCode = User.PostalCode,
+                City = User.City,
+                PhoneNumber = User.PhoneNumber
+            };
 
-    var productResponse = await client.GetAsync("/Auction/GetAllProducts");
+            var productResponse = await client.GetAsync("/Auction/GetAllProducts");
 
-    if (!productResponse.IsSuccessStatusCode)
-        return Page();
+            if (!productResponse.IsSuccessStatusCode)
+                return Page();
 
-    var products = await productResponse.Content.ReadFromJsonAsync<List<ProductModel>>();
-    if (products is null)
-        return Page();
+            var products = await productResponse.Content.ReadFromJsonAsync<List<ProductModel>>();
+            if (products is null)
+                return Page();
 
-    ActiveBids = products
-        .Where(p => p.BidHistory?.Any(b => b.BidderId == User.CustomerNumber) == true)
-        .ToList();
+            // ✅ FIXED: Filter based on correct property from backend (CustomerNumber)
+            ActiveBids = products
+                .Where(p => p.BidHistory?.Any(b => b.CustomerNumber == User.CustomerNumber) == true)
+                .ToList();
 
-    OwnProducts = products
-        .Where(p => p.BidHistory?.Any(b => b.BidderId == User.CustomerNumber) == false &&
-                    (p.CurrentBidder == null || p.CurrentBidder != User.CustomerNumber))
-        .ToList();
+            // Show only products created by this user
+            OwnProducts = products
+                .Where(p => p.CustomerNumber == User.CustomerNumber)
+                .ToList();
 
-    ViewData["IsUser"] = true; // ✅ This tells the layout we're on the user page
+            ViewData["IsUser"] = true;
 
-    return Page();
-}
-
+            return Page();
+        }
 
         public async Task<IActionResult> OnPostAsync()
         {
@@ -162,12 +162,13 @@ namespace MyApp.Namespace
             public DateTime EndOfAuction { get; set; }
             public int? CurrentBidder { get; set; }
             public bool IsApproved { get; set; }
+            public int CustomerNumber { get; set; }
             public List<BidHistory>? BidHistory { get; set; }
         }
 
         public class BidHistory
         {
-            public int BidderId { get; set; }
+            public int CustomerNumber { get; set; }  // ✅ match backend
             public decimal BidAmount { get; set; }
             public DateTime BidTime { get; set; }
         }

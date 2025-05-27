@@ -33,7 +33,7 @@
     @foreach (var product in Model.ActiveBids)
     {
         var yourBid = product.BidHistory?
-            .Where(b => b.BidderId == Model.User.CustomerNumber)
+            .Where(b => b.CustomerNumber == Model.User.CustomerNumber)
             .OrderByDescending(b => b.BidAmount)
             .FirstOrDefault()?.BidAmount ?? 0;
 
@@ -50,6 +50,7 @@
     }
     </tbody>
 </table>
+
 
 <h3>Dine salgsforslag</h3>
 

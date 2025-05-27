@@ -29,7 +29,7 @@
                     @if (isLoggedIn && (isAdmin || isUser))
                     {
                         <li class="nav-item">
-                            <a class="nav-link" href="/@(isAdmin ? "Admin" : "User")">
+                            <a class="nav-link" href="/auction/@(isAdmin ? "Admin" : "User")">
                                 Tilbage til @(isAdmin ? "Admin" : "Bruger") Panel
                             </a>
                         </li>
