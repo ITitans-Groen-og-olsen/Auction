@@ -22,7 +22,7 @@ namespace MyApp.Namespace
         using HttpClient client = _clientFactory.CreateClient("gateway");
         var allProducts = await client.GetFromJsonAsync<List<Product>>("Auction/GetAllProducts");
 
-        // ✅ Only include approved products that have not expired
+        //  Only include approved products that have not expired
         Products = allProducts?
             .Where(p => p.IsApproved && p.EndOfAuction > DateTime.UtcNow)
             .ToList();

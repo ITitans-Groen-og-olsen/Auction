@@ -69,7 +69,7 @@ namespace MyApp.Namespace
             if (products is null)
                 return Page();
 
-            // ✅ FIXED: Filter based on correct property from backend (CustomerNumber)
+            // Filter based on correct property from backend (CustomerNumber)
             ActiveBids = products
                 .Where(p => p.BidHistory?.Any(b => b.CustomerNumber == User.CustomerNumber) == true)
                 .ToList();
@@ -168,7 +168,7 @@ namespace MyApp.Namespace
 
         public class BidHistory
         {
-            public int CustomerNumber { get; set; }  // ✅ match backend
+            public int CustomerNumber { get; set; }  
             public decimal BidAmount { get; set; }
             public DateTime BidTime { get; set; }
         }

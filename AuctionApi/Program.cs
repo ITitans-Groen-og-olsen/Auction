@@ -25,7 +25,7 @@ try
     builder.Services.AddRazorPages();
     builder.Services.AddControllers();
 
-    // ✅ Add session support
+    // Add session support
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddSession(); 
 
