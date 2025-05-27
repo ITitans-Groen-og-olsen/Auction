@@ -10,6 +10,7 @@ namespace MyApp.Namespace
         public void OnGet()
         {
             JwtToken = HttpContext.Session.GetString("jwtToken");
+            ViewData["IsAdmin"] = true; // ✅ This tells the layout we're on the admin page
         }
     }
 }

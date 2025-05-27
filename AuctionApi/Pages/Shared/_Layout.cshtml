@@ -1,7 +1,10 @@
 @{
     var isLoggedIn = Context.Session.GetString("jwtToken") != null;
-    var userName = Context.Session.GetString("userName");
+    var role = Context.Session.GetString("role");
+    var isAdmin = role == "Admin";
+    var isUser = role == "User";
 }
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -22,6 +25,15 @@
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="/auction/Catalog">Catalog</a></li>
+
+                    @if (isLoggedIn && (isAdmin || isUser))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/@(isAdmin ? "Admin" : "User")">
+                                Tilbage til @(isAdmin ? "Admin" : "Bruger") Panel
+                            </a>
+                        </li>
+                    }
 
                     @if (isLoggedIn)
                     {
@@ -61,7 +73,6 @@
         </div>
     </div>
 
-    <!-- Hidden logout form -->
     @if (isLoggedIn)
     {
         <form id="logoutForm" method="post" action="/auction/Logout" style="display: none;">
@@ -69,7 +80,6 @@
         </form>
     }
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function showLogoutModal() {
