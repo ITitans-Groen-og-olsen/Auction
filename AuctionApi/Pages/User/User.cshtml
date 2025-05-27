@@ -37,20 +37,28 @@
             .OrderByDescending(b => b.BidAmount)
             .FirstOrDefault()?.BidAmount ?? 0;
 
-        var status = product.EndOfAuction < DateTime.Now
-            ? (product.CurrentBidder == Model.User.CustomerNumber ? "Vundet" : "Tabt")
-            : "I gang";
+        var hasEnded = product.EndOfAuction < DateTime.Now;
+        var isWinner = product.CurrentBidder == Model.User.CustomerNumber;
+        var status = hasEnded ? (isWinner ? "Vundet" : "Tabt") : "I gang";
 
         <tr>
             <td>@product.Name</td>
             <td>@yourBid.ToString("C")</td>
             <td>@(product.CurrentBid?.ToString("C") ?? "-")</td>
-            <td>@status</td>
+            <td>
+                @status
+                @if (hasEnded && isWinner)
+                {
+                    <!-- ✅ Add "Betal" button -->
+                    <button type="button" class="btn btn-success btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                        Betal
+                    </button>
+                }
+            </td>
         </tr>
     }
     </tbody>
 </table>
-
 
 <h3>Dine salgsforslag</h3>
 
@@ -72,7 +80,25 @@
     </tbody>
 </table>
 
-<!-- Modal -->
+<!-- ✅ Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Betaling</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Luk"></button>
+            </div>
+            <div class="modal-body">
+                Betalingssystem vil blive tilføjet senere.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Luk</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Existing Profile Modal -->
 <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
