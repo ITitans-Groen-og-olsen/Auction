@@ -2,7 +2,7 @@
 @model MyApp.Namespace.AdminModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-        Layout = "_Layout";
+    Layout = "_Layout";
 }
 
 <!DOCTYPE html>
@@ -63,9 +63,6 @@
         <ul id="activeList"></ul>
     </section>
 
-   
-
-    <!-- ✅ Edit Auction Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -84,10 +81,15 @@
         </div>
     </div>
 
-   
     <script>
+        const jwtToken = '@Model.JwtToken';
+
         const loadProducts = async () => {
-            const res = await fetch('/Auction/GetAllProducts');
+            const res = await fetch('/Auction/GetAllProducts', {
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`
+                }
+            });
             const products = await res.json();
 
             const now = new Date();
@@ -136,7 +138,10 @@
                 product.isApproved = true;
                 await fetch(`/Auction/UpdateProduct/${product.id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
                     body: JSON.stringify(product)
                 });
                 loadProducts();
@@ -163,7 +168,9 @@
             const form = e.target;
             const id = form.Id.value;
 
-            const res = await fetch(`/Auction/GetProductById/${id}`);
+            const res = await fetch(`/Auction/GetProductById/${id}`, {
+                headers: { 'Authorization': `Bearer ${jwtToken}` }
+            });
             const product = await res.json();
 
             product.name = form.Name.value;
@@ -173,7 +180,10 @@
 
             await fetch(`/Auction/UpdateProduct/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${jwtToken}`
+                },
                 body: JSON.stringify(product)
             });
 
@@ -181,20 +191,9 @@
             loadProducts();
         };
 
-        const showAdminModal = () => {
-            document.getElementById('adminModal').style.display = 'block';
-        };
-
-        const closeAdminModal = () => {
-            document.getElementById('adminModal').style.display = 'none';
-        };
-
-        // Close modal if background is clicked
         window.onclick = function(event) {
             const editModal = document.getElementById('editModal');
-            const adminModal = document.getElementById('adminModal');
             if (event.target === editModal) closeEditModal();
-            if (event.target === adminModal) closeAdminModal();
         };
 
         loadProducts();

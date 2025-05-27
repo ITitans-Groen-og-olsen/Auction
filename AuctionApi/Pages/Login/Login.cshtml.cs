@@ -29,37 +29,74 @@ namespace MyApp.Namespace
                 return Page();
 
             var client = _clientFactory.CreateClient("gateway");
-            var endpoint = "/Auth/UserLogin";
 
             try
             {
-                var response = await client.PostAsJsonAsync(endpoint, new
+                if (LoginModel.IsAdmin)
                 {
-                    EmailAddress = LoginModel.EmailAddress,
-                    Password = LoginModel.Password
-                });
+                    // Admin login path
+                    var response = await client.PostAsJsonAsync("/Auth/AdminLogin", new
+                    {
+                        EmailAddress = LoginModel.EmailAddress,
+                        Password = LoginModel.Password
+                    });
 
-                var json = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Raw response: {json}");
+                    var json = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Admin login raw response: {json}");
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    LoginFailed = true;
-                    return Page();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        LoginFailed = true;
+                        return Page();
+                    }
+
+                    var adminToken = JsonSerializer.Deserialize<AdminLoginResponse>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (!string.IsNullOrEmpty(adminToken?.Token))
+                    {
+                        HttpContext.Session.SetString("jwtToken", adminToken.Token);
+                        HttpContext.Session.SetString("role", "Admin");
+                        return Redirect("/auction/Admin");
+                    }
                 }
-
-                var root = JsonSerializer.Deserialize<LoginResponseWrapper>(json, new JsonSerializerOptions
+                else
                 {
-                    PropertyNameCaseInsensitive = true
-                });
+                    // Regular user login path
+                    var response = await client.PostAsJsonAsync("/Auth/UserLogin", new
+                    {
+                        EmailAddress = LoginModel.EmailAddress,
+                        Password = LoginModel.Password
+                    });
 
-                if (root?.ReturnObject?.JwtToken is not null)
-                {
-                    // ✅ Store in session
-                    HttpContext.Session.SetString("userId", root.ReturnObject.Id);
-                    HttpContext.Session.SetString("jwtToken", root.ReturnObject.JwtToken);
+                    var json = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"User login raw response: {json}");
 
-                    return Redirect("/auction/User");
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        LoginFailed = true;
+                        return Page();
+                    }
+
+                    var root = JsonSerializer.Deserialize<LoginResponseWrapper>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (!string.IsNullOrEmpty(root?.ReturnObject?.JwtToken))
+                    {
+                        HttpContext.Session.SetString("userId", root.ReturnObject.Id);
+                        HttpContext.Session.SetString("jwtToken", root.ReturnObject.JwtToken);
+                        HttpContext.Session.SetString("role", "User");
+
+                        return Redirect("/auction/User");
+
+                    }
+  
+
+
                 }
             }
             catch (Exception ex)
@@ -78,6 +115,8 @@ namespace MyApp.Namespace
 
             [Required(ErrorMessage = "Password is required.")]
             public string Password { get; set; }
+
+            public bool IsAdmin { get; set; }
         }
 
         private class LoginResponseWrapper
@@ -93,6 +132,12 @@ namespace MyApp.Namespace
 
             [JsonPropertyName("jwtToken")]
             public string JwtToken { get; set; }
+        }
+
+        private class AdminLoginResponse
+        {
+            [JsonPropertyName("token")]
+            public string Token { get; set; }
         }
     }
 }

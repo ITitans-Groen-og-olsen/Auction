@@ -1,13 +1,15 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Http;
 
 namespace MyApp.Namespace
 {
-    [AllowAnonymous] // REMOVE or RESTRICT later after admin service is implemented
     public class AdminModel : PageModel
     {
+        public string? JwtToken { get; private set; }
+
         public void OnGet()
         {
+            JwtToken = HttpContext.Session.GetString("jwtToken");
         }
     }
 }
