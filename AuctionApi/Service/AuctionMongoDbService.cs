@@ -14,9 +14,15 @@ namespace Services
         public AuctionMongoDBService(ILogger<AuctionMongoDBService> logger, IConfiguration configuration)
         {
             _logger = logger;
-            var connectionString = configuration["MongoConnectionString"] ?? "<blank>"; 
-            var databaseName = configuration["DatabaseName"] ?? "<blank>";
-            var collectionName = configuration["CollectionName"] ?? "<blank>";
+           var connectionString = Environment.GetEnvironmentVariable("MongoConnectionString") 
+                                    ?? configuration.GetValue<string>("MongoConnectionString");
+
+        var databaseName = Environment.GetEnvironmentVariable("DatabaseName") 
+                           ?? configuration.GetValue<string>("DatabaseName", "AuctionDB");
+
+        var collectionName = Environment.GetEnvironmentVariable("CollectionName") 
+                             ?? configuration.GetValue<string>("CollectionName", "Products");
+
             _logger.LogInformation($"Connected to MongoDB using: {connectionString}");
             _logger.LogInformation($" Using database: {databaseName}");
             _logger.LogInformation($" Using Collection: {collectionName}");
@@ -33,9 +39,9 @@ namespace Services
             }
         }
 
-        public async Task<Product> GetProductByIdAsync(string id)
+        public async Task<Product> GetProductByIdAsync(Guid id)
         {
-            return await _products.Find(p => p.Id.ToString() == id).FirstOrDefaultAsync();
+            return await _products.Find(p => p.Id == id).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
@@ -45,7 +51,7 @@ namespace Services
 
         public async Task<Product> CreateProductAsync(Product product)
         {
-            product.Id = Guid.NewGuid(); 
+            product.Id = Guid.NewGuid();
             await _products.InsertOneAsync(product);
             return product;
         }
@@ -61,5 +67,21 @@ namespace Services
             var result = await _products.DeleteOneAsync(p => p.Id.ToString() == id);
             return result.DeletedCount > 0;
         }
+        public async Task<Product> AddBidAsync(Guid productId, BidHistory bid)
+        {
+            var filter = Builders<Product>.Filter.Eq(p => p.Id,productId);
+            var update = Builders<Product>.Update
+                .Push(p => p.BidHistory, bid)
+                .Set(p => p.currentbid, bid.BidAmount)
+                .Set(p => p.CurrentBidder, bid.CustomerNumber);
+
+            var result = await _products.FindOneAndUpdateAsync(filter, update, new FindOneAndUpdateOptions<Product>
+            {
+                ReturnDocument = ReturnDocument.After
+            });
+
+            return result;
+        }
+
     }
 }

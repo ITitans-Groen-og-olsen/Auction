@@ -1,11 +1,25 @@
 {
-  "_id": "3f9cfaab-38e0-4a5e-8be2-50c44d2c3b12",
-  "name": "4K Ultra HD Monitor",
-  "description": "Stunning 27-inch monitor with razor-sharp 4K resolution.",
-  "startPrice": 199.99,
-  "currentbid": 245.00,
-  "brand": "ViewTech",
-  "image": "https://example.com/images/monitor.jpg",
-  "endOfAuction": "2025-06-20T21:00:00Z",
-  "currentBidder": 1023
+  "_id": "9a9f8e52-cd8a-4ecf-b0f6-1f9d3b9d9e7b",
+  "name": "Vintage Guitar",
+  "description": "A well-maintained vintage guitar from the 60s.",
+  "startPrice": 150.00,
+  "currentbid": 250.00,
+  "brand": "Fender",
+  "image": "vintage_guitar.jpg",
+  "endOfAuction": "2025-06-01T18:00:00Z",
+  "currentBidder": 1023,
+  "bidHistory": [
+    {
+      "productId": "9a9f8e52-cd8a-4ecf-b0f6-1f9d3b9d9e7b",
+      "bidderId": 1012,
+      "bidAmount": 200.00,
+      "bidTime": "2025-05-10T12:00:00Z"
+    },
+    {
+      "productId": "9a9f8e52-cd8a-4ecf-b0f6-1f9d3b9d9e7b",
+      "bidderId": 1023,
+      "bidAmount": 250.00,
+      "bidTime": "2025-05-11T09:30:00Z"
+    }
+  ]
 }

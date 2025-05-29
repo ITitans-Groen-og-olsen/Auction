@@ -1,0 +1,97 @@
+@{
+    var isLoggedIn = Context.Session.GetString("jwtToken") != null;
+    var role = Context.Session.GetString("role");
+    var isAdmin = role == "Admin";
+    var isUser = role == "User";
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Grøn og Olsen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Grøn og Olsen</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/auction/Catalog">Catalog</a></li>
+
+                    @if (isLoggedIn && (isAdmin || isUser))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auction/@(isAdmin ? "Admin" : "User")">
+                                Tilbage til @(isAdmin ? "Admin" : "Bruger") Panel
+                            </a>
+                        </li>
+                    }
+
+                    @if (isLoggedIn)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showLogoutModal(); return false;">Logout</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" href="/auction/Login">Login</a></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        @RenderBody()
+    </div>
+
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Bekræft Log ud</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Luk"></button>
+                </div>
+                <div class="modal-body">
+                    Er du sikker på, at du vil logge ud?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
+                    <button type="button" class="btn btn-danger" onclick="submitLogoutForm()">Ja, log ud</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoggedIn)
+    {
+        <form id="logoutForm" method="post" action="/auction/Logout" style="display: none;">
+            @Html.AntiForgeryToken()
+        </form>
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showLogoutModal() {
+            const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+            modal.show();
+        }
+
+        function submitLogoutForm() {
+            document.getElementById('logoutForm').submit();
+        }
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

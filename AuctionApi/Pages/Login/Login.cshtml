@@ -1,0 +1,45 @@
+﻿@page "/Login"
+@model MyApp.Namespace.LoginPageModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label class="form-label" for="EmailAddress">Email</label>
+        <input name="LoginModel.EmailAddress" id="EmailAddress" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="Password">Password</label>
+        <input name="LoginModel.Password" id="Password" type="password" class="form-control" />
+    </div>
+
+    <div class="form-check mb-3">
+        <input type="checkbox" class="form-check-input" id="IsAdmin" name="LoginModel.IsAdmin" value="true" />
+        <label class="form-check-label" for="IsAdmin">Login as Admin</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+    <a class="btn btn-link" href="/auction/Register">Registrer ny bruger</a>
+</form>
+
+@if (Model.LoginFailed)
+{
+    <div class="alert alert-danger mt-3">Invalid login credentials.</div>
+}
+
+@if (ModelState.ErrorCount > 0)
+{
+    <div class="alert alert-danger mt-3">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@error.ErrorMessage</div>
+        }
+    </div>
+}

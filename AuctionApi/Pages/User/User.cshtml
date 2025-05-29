@@ -1,0 +1,156 @@
+﻿@page "/User"
+@model MyApp.Namespace.UserModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "User Dashboard";
+}
+
+<h2>Velkommen, @Model.User?.FirstName @Model.User?.LastName</h2>
+
+<!-- Top action buttons -->
+<div class="mt-3 mb-4 d-flex justify-content-start gap-2">
+    <a href="/auction/AddProduct" class="btn btn-outline-primary">
+        Opret nyt salg
+    </a>
+
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">
+        Rediger Profil
+    </button>
+</div>
+
+<h3>Dine aktive bud</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Auktions titel</th>
+            <th>Dit bud</th>
+            <th>Højeste bud</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var product in Model.ActiveBids)
+    {
+        var yourBid = product.BidHistory?
+            .Where(b => b.CustomerNumber == Model.User.CustomerNumber)
+            .OrderByDescending(b => b.BidAmount)
+            .FirstOrDefault()?.BidAmount ?? 0;
+
+        var hasEnded = product.EndOfAuction < DateTime.Now;
+        var isWinner = product.CurrentBidder == Model.User.CustomerNumber;
+        var status = hasEnded ? (isWinner ? "Vundet" : "Tabt") : "I gang";
+
+        <tr>
+            <td>@product.Name</td>
+            <td>@yourBid.ToString("C")</td>
+            <td>@(product.CurrentBid?.ToString("C") ?? "-")</td>
+            <td>
+                @status
+                @if (hasEnded && isWinner)
+                {
+                    <!--  Add "Betal" button -->
+                    <button type="button" class="btn btn-success btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                        Betal
+                    </button>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<h3>Dine salgsforslag</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Produktnavn</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var product in Model.OwnProducts)
+    {
+        <tr>
+            <td>@product.Name</td>
+            <td>@(product.IsApproved ? "Godkendt" : "Afventer godkendelse")</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<!--  Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Betaling</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Luk"></button>
+            </div>
+            <div class="modal-body">
+                Betalingssystem vil blive tilføjet senere.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Luk</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Existing Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page="/User/User">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="UpdateForm.Id" value="@Model.UpdateForm.Id" />
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.FirstName" class="form-label">Fornavn</label>
+                        <input name="UpdateForm.FirstName" class="form-control" value="@Model.UpdateForm.FirstName" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.LastName" class="form-label">Efternavn</label>
+                        <input name="UpdateForm.LastName" class="form-control" value="@Model.UpdateForm.LastName" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.EmailAddress" class="form-label">Email</label>
+                        <input name="UpdateForm.EmailAddress" class="form-control" value="@Model.UpdateForm.EmailAddress" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.Address" class="form-label">Adresse</label>
+                        <input name="UpdateForm.Address" class="form-control" value="@Model.UpdateForm.Address" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.PostalCode" class="form-label">Postnummer</label>
+                        <input name="UpdateForm.PostalCode" class="form-control" type="number" value="@Model.UpdateForm.PostalCode" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.City" class="form-label">By</label>
+                        <input name="UpdateForm.City" class="form-control" value="@Model.UpdateForm.City" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UpdateForm.PhoneNumber" class="form-label">Telefonnummer</label>
+                        <input name="UpdateForm.PhoneNumber" class="form-control" value="@Model.UpdateForm.PhoneNumber" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Gem ændringer</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Luk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (ModelState.ErrorCount > 0)
+{
+    <div class="alert alert-danger mt-3">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@error.ErrorMessage</div>
+        }
+    </div>
+}
