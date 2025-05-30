@@ -5,7 +5,8 @@
     ViewData["Title"] = "Opret Salgsforslag";
 }
 
-@if (false) // Simulate logged in
+<!-- Show warning if user is not logged in -->
+@if (false) // Simulate logged in 
 {
     <div class="alert alert-warning">Du skal være logget ind for at foreslå et produkt.</div>
 }
@@ -13,6 +14,7 @@ else
 {
     <h2>Opret Salgsforslag</h2>
 
+<!-- Product submission form -->
     <form method="post" enctype="multipart/form-data">
         @* @Html.AntiForgeryToken() *@
         
@@ -44,6 +46,7 @@ else
         <button type="submit" class="btn btn-primary">Send Forslag</button>
     </form>
 
+ <!-- Success message -->
     @if (Model.Submitted)
     {
         <div class="alert alert-success mt-3">Dit forslag er sendt til godkendelse.</div>

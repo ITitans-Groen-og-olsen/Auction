@@ -18,7 +18,7 @@ jobs:
     env:
       DOCKER_USER: ${{ secrets.DOCKER_USER }}
       IMAGE_NAME: auction-service
-      IMAGE_VERSION: 0.1.0
+      IMAGE_VERSION: 0.2.0
 
     steps:
       - uses: actions/checkout@v4

@@ -8,16 +8,19 @@
 
 <h1>Admin Panel</h1>
 
+<!-- Section for products awaiting approval -->
 <section>
     <h2>1. Afventer Godkendelse</h2>
     <ul id="pendingList"></ul>
 </section>
 
+<!-- Section for currently active (approved) auctions -->
 <section>
     <h2>2. Aktive Auktioner</h2>
     <ul id="activeList"></ul>
 </section>
 
+<!-- Modal window for editing a product -->
 <div id="editModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -38,8 +41,10 @@
 
 @section Scripts {
 <script>
+    // Token passed from server for authorization
     const jwtToken = '@Model.JwtToken';
 
+    // Loads all products from the API and displays them in respective lists
     const loadProducts = async () => {
         const res = await fetch('/Auction/GetAllProducts', {
             headers: {
@@ -54,6 +59,7 @@
         pendingList.innerHTML = '';
         activeList.innerHTML = '';
 
+     // Loop through each product and categorize it
         products.forEach(p => {
             const li = document.createElement('li');
             li.textContent = `${p.name} - ${p.startPrice} kr`;
@@ -61,7 +67,7 @@
             const isApproved = p.isApproved === true;
             const hasBids = p.bidHistory && p.bidHistory.length > 0;
             const notEnded = new Date(p.endOfAuction) > now;
-
+    // Product is pending approval
             if (!isApproved) {
                 const approveBtn = document.createElement('button');
                 approveBtn.textContent = "Godkend";
@@ -82,7 +88,7 @@
                 li.appendChild(deleteBtn);
                 pendingList.appendChild(li);
             }
-
+   // Product is active and approved
             if (notEnded && isApproved) {
                 const detailBtn = document.createElement('button');
                 detailBtn.textContent = "Vis bud";
@@ -95,7 +101,7 @@
             }
         });
     };
-
+    // Confirms and sends approval update for a product
     const confirmApproval = async (product) => {
         if (confirm("Er du sikker på du vil godkende dette produkt?")) {
             product.isApproved = true;
@@ -110,7 +116,7 @@
             loadProducts();
         }
     };
-
+    // Confirms and sends delete request for a product
     const confirmDelete = async (productId) => {
         if (confirm("Er du sikker på du vil slette dette produkt?")) {
             await fetch(`/Auction/DeleteProduct/${productId}`, {
@@ -122,7 +128,7 @@
             loadProducts();
         }
     };
-
+// Opens modal form with product data for editing
     const openEditModal = (product) => {
         const form = document.getElementById('editForm');
         form.Id.value = product.id;
@@ -132,27 +138,30 @@
         form.EndOfAuction.value = new Date(product.endOfAuction).toISOString().slice(0, 16);
         document.getElementById('editModal').style.display = 'block';
     };
-
+// Closes the edit modal
     const closeEditModal = () => {
         document.getElementById('editModal').style.display = 'none';
     };
-
+ // Handles submission of the edit form and updates the product
     document.getElementById('editForm').onsubmit = async (e) => {
         e.preventDefault();
 
         const form = e.target;
         const id = form.Id.value;
 
+ // Get existing product data
         const res = await fetch(`/Auction/GetProductById/${id}`, {
             headers: { 'Authorization': `Bearer ${jwtToken}` }
         });
         const product = await res.json();
 
+   // Update fields from form
         product.name = form.Name.value;
         product.description = form.Description.value;
         product.startPrice = parseFloat(form.StartPrice.value);
         product.endOfAuction = new Date(form.EndOfAuction.value).toISOString();
 
+// Send update request
         await fetch(`/Auction/UpdateProduct/${id}`, {
             method: 'PUT',
             headers: {
@@ -165,12 +174,13 @@
         closeEditModal();
         loadProducts();
     };
-
+// Close modal if user clicks outside the modal window
     window.onclick = function (event) {
         const editModal = document.getElementById('editModal');
         if (event.target === editModal) closeEditModal();
     };
 
+  // Initial data load when page loads
     loadProducts();
 </script>
 }

@@ -22,7 +22,7 @@ public class AuctionController : ControllerBase
         var _ipaddr = ips.First().MapToIPv4().ToString();
         _logger.LogInformation("Auction Service responding from {IP}", _ipaddr);
     }
-
+   // Returns the product that matches the ID
     [HttpGet("GetProductById/{productId}")]
     public async Task<Product> GetProductById(Guid productId)
     {
@@ -42,7 +42,7 @@ public class AuctionController : ControllerBase
             throw;
         }
     }
-
+    // Returns all the products in the database
     [HttpGet("GetAllProducts")]
     public async Task<IEnumerable<Product>> GetAllProducts()
     {
@@ -59,7 +59,7 @@ public class AuctionController : ControllerBase
             throw;
         }
     }
-
+    // Adds a new product to the database
     [HttpPost("AddProduct")]
     public async Task<Product> AddProduct([FromBody] Product product)
     {
@@ -80,7 +80,7 @@ public class AuctionController : ControllerBase
             throw;
         }
     }
-
+    // Updates the product with matching Id
     [HttpPut("UpdateProduct/{productId}")]
     public async Task<Product> UpdateProduct(string productId, Product product)
     {
@@ -97,7 +97,7 @@ public class AuctionController : ControllerBase
             throw;
         }
     }
-
+    // Delete the product with matching Id
     [HttpDelete("DeleteProduct/{productId}")]
     public async Task<bool> DeleteProduct(string productId)
     {
@@ -121,7 +121,7 @@ public class AuctionController : ControllerBase
             throw;
         }
     }
-
+    // Add a bid to a product. 
     [HttpPost("bid/{productId}")]
 public async Task<IActionResult> PlaceBid(Guid productId, [FromBody] BidHistory bid)
 {
@@ -183,7 +183,7 @@ public async Task<IActionResult> PlaceBid(Guid productId, [FromBody] BidHistory 
 }
 
 
-
+    // returns the version that is currently used
     [HttpGet("version")]
     public async Task<Dictionary<string, string>> GetVersion()
     {

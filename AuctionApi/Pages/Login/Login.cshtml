@@ -7,6 +7,7 @@
 
 <h2>Login</h2>
 
+<!-- Login form using POST method -->
 <form method="post">
     @Html.AntiForgeryToken()
 
@@ -29,11 +30,13 @@
     <a class="btn btn-link" href="/auction/Register">Registrer ny bruger</a>
 </form>
 
+<!-- Show error if login attempt failed (e.g., wrong credentials) -->
 @if (Model.LoginFailed)
 {
     <div class="alert alert-danger mt-3">Invalid login credentials.</div>
 }
 
+<!-- Display validation errors from ModelState --
 @if (ModelState.ErrorCount > 0)
 {
     <div class="alert alert-danger mt-3">

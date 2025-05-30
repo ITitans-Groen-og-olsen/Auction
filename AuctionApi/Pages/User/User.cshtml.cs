@@ -86,7 +86,7 @@ namespace MyApp.Namespace
 
         public async Task<IActionResult> OnPostAsync()
         {
-            _logger.LogInformation("🛠️ OnPostAsync triggered with form: {@UpdateForm}", UpdateForm);
+            _logger.LogInformation("OnPostAsync triggered with form: {@UpdateForm}", UpdateForm);
 
             var client = _clientFactory.CreateClient("gateway");
 

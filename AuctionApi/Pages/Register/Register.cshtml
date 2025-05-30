@@ -1,34 +1,77 @@
 ﻿@page "/Register"
 @using MyApp.Namespace
 @model RegisterPageModel
+
 @{
-    Layout = "_Layout";
-    ViewData["Title"] = "Register";
+    Layout = "_Layout";                    
+    ViewData["Title"] = "Register";       
 }
 
 <h2>Register</h2>
 
+<!-- Registration form using POST method -->
 <form method="post">
-    @Html.AntiForgeryToken()
+    @Html.AntiForgeryToken()             
 
-    <div class="mb-3"><label class="form-label">First Name</label><input name="RegisterModel.FirstName" class="form-control" /></div>
-    <div class="mb-3"><label class="form-label">Last Name</label><input name="RegisterModel.LastName" class="form-control" /></div>
-    <div class="mb-3"><label class="form-label">Address</label><input name="RegisterModel.Address" class="form-control" /></div>
-    <div class="mb-3"><label class="form-label">Postal Code</label><input name="RegisterModel.PostalCode" class="form-control" /></div>
-    <div class="mb-3"><label class="form-label">City</label><input name="RegisterModel.City" class="form-control" /></div>
-    <div class="mb-3"><label class="form-label">Phone Number</label><input name="RegisterModel.PhoneNumber" class="form-control" /></div>
-    <div class="mb-3"><label class="form-label">Email</label><input name="RegisterModel.EmailAddress" class="form-control" /></div>
-    <div class="mb-3"><label class="form-label">Password</label><input name="RegisterModel.Password" type="password" class="form-control" /></div>
+    <!-- Input for user's first name -->
+    <div class="mb-3">
+        <label class="form-label">First Name</label>
+        <input name="RegisterModel.FirstName" class="form-control" />
+    </div>
 
+    <!-- Input for user's last name -->
+    <div class="mb-3">
+        <label class="form-label">Last Name</label>
+        <input name="RegisterModel.LastName" class="form-control" />
+    </div>
+
+    <!-- Input for user's address -->
+    <div class="mb-3">
+        <label class="form-label">Address</label>
+        <input name="RegisterModel.Address" class="form-control" />
+    </div>
+
+    <!-- Input for user's postal code -->
+    <div class="mb-3">
+        <label class="form-label">Postal Code</label>
+        <input name="RegisterModel.PostalCode" class="form-control" />
+    </div>
+
+    <!-- Input for user's city -->
+    <div class="mb-3">
+        <label class="form-label">City</label>
+        <input name="RegisterModel.City" class="form-control" />
+    </div>
+
+    <!-- Input for user's phone number -->
+    <div class="mb-3">
+        <label class="form-label">Phone Number</label>
+        <input name="RegisterModel.PhoneNumber" class="form-control" />
+    </div>
+
+    <!-- Input for user's email address -->
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input name="RegisterModel.EmailAddress" class="form-control" />
+    </div>
+
+    <!-- Password input (masked) -->
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input name="RegisterModel.Password" type="password" class="form-control" />
+    </div>
+
+    <!-- Submit button for the registration form -->
     <button type="submit" class="btn btn-primary">Register</button>
 </form>
 
+<!-- Display validation errors if any exist -->
 @if (ModelState.ErrorCount > 0)
 {
     <div class="alert alert-danger mt-3">
         @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
         {
-            <div>@error.ErrorMessage</div>
+            <div>@error.ErrorMessage</div> 
         }
     </div>
 }

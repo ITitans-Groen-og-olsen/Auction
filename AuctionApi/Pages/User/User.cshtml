@@ -32,13 +32,17 @@
     <tbody>
     @foreach (var product in Model.ActiveBids)
     {
+        // Find the highest bid amount by the logged-in user on this product
         var yourBid = product.BidHistory?
             .Where(b => b.CustomerNumber == Model.User.CustomerNumber)
             .OrderByDescending(b => b.BidAmount)
             .FirstOrDefault()?.BidAmount ?? 0;
 
+ // Check if the auction has ended by comparing auction end date with current date/time
         var hasEnded = product.EndOfAuction < DateTime.Now;
+        // Check if logged-in user is the current winning bidder
         var isWinner = product.CurrentBidder == Model.User.CustomerNumber;
+        // Determine status string depending on auction ended and winner state
         var status = hasEnded ? (isWinner ? "Vundet" : "Tabt") : "I gang";
 
         <tr>
@@ -60,6 +64,7 @@
     </tbody>
 </table>
 
+<!-- Section displaying products that the user has put up for sale -->
 <h3>Dine salgsforslag</h3>
 
 <table class="table table-bordered">

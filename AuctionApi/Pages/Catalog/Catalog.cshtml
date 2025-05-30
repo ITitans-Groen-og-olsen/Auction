@@ -12,6 +12,7 @@
 <div class="container py-4">
     <h1 class="mb-4">Aktive Auktioner</h1>
 
+@* Check if there are products to display *@
     @if (Model.Products != null && Model.Products.Any())
     {
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -40,6 +41,7 @@
     }
     else
     {
+        <!-- Message if there are no products to display -->
         <p>Ingen auktioner fundet.</p>
     }
 </div>
